@@ -102,6 +102,7 @@ export default class ConnectorAPNIC extends Connector {
 
         return this._getDump()
             .then(file => {
+                console.log(`[${this.connectorName}] Parsing whois data`);
                 return Promise.all(types.map(type => this._multiReadLines(file, type, filterFunction, fields)))
                     .then(objects => {
                         return [].concat.apply([], objects);

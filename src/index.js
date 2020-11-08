@@ -9,7 +9,8 @@ export default class WhoisParser {
         this.params = params || {};
         this.cacheDir = this.params.cacheDir || ".cache/";
 
-        this.connectors = {
+        this.connectors = {};
+        const connectors = {
             "ripe": new ConnectorRIPE(this.params),
             "afrinic": new ConnectorAFRINIC(this.params),
             "apnic": new ConnectorAPNIC(this.params),
@@ -17,9 +18,18 @@ export default class WhoisParser {
             "lacnic": new ConnectorLACNIC(this.params)
         };
 
+        if (this.params.repos) {
+            for (let repo of this.params.repos) {
+                this.connectors[repo] = connectors[repo];
+            }
+        } else {
+            this.connectors = connectors;
+        }
+
     };
 
     getObjects = (types, filterFunction, fields) => {
+        fields = fields || [];
         return Promise
             .all(Object
                 .keys(this.connectors)
@@ -38,6 +48,6 @@ const filterFunction = (inetnum) => {
     return false;
 }
 
-new WhoisParser({})
-    .getObjects(["inetnum", "inet6num"], filterFunction, null)
-    .then(console.log);
+// new WhoisParser({ repos: ["ripe", "lacnic", "apnic", "afrinic"] })
+//     .getObjects(["inetnum", "inet6num"], filterFunction, null)
+//     .then(console.log);

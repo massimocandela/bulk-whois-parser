@@ -93,13 +93,13 @@ export default class Connector {
     };
 
     getStandardObject = (object) => {
-        if (object.inetnum) {
-            try {
-                object.inetnum = ipUtils.ipRangeToCidr(...object.inetnum.split("-").map(i => i.trim()));
-            } catch(e) {
-                // Nothing
-            }
-        }
+        // if (object.inetnum) {
+        //     try {
+        //         object.inetnum = ipUtils.ipRangeToCidr(...object.inetnum.split("-").map(i => i.trim()));
+        //     } catch(e) {
+        //         // Nothing
+        //     }
+        // }
 
         if (object.remarks) {
             if (!Array.isArray(object.remarks)) {
@@ -161,6 +161,7 @@ export default class Connector {
         fields = fields || [];
         return this._getDump()
             .then(file => {
+                console.log(`[${this.connectorName}] Parsing whois data`);
                 return Promise.all(types.map(type => this._readLines(file, type, filterFunction, fields)))
                     .then(objects => {
                         return [].concat.apply([], objects);
