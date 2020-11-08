@@ -14,22 +14,5 @@ export default class ConnectorLACNIC extends Connector {
         if (!fs.existsSync(this.cacheDir)) {
             fs.mkdirSync(this.cacheDir,  { recursive: true });
         }
-
     }
-
 }
-
-const e = new ConnectorLACNIC({});
-
-const filterFunction = (inetnum) => {
-
-    return true;
-    if (inetnum.remarks && inetnum.remarks.length > 0 ) {
-        return inetnum.remarks.some(i => i.startsWith("Geofeed"));
-    }
-
-    return false;
-}
-
-e.getObjects(["inetnum"], filterFunction, ["inetnum", "remarks"])
-    .then(console.log)

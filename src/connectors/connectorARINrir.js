@@ -221,14 +221,7 @@ export default class ConnectorARIN extends Connector {
         } else {
             return Promise
                 .all(types.map(type => {
-                    return this._createWhoisDump(this.internalNames[type])
-                        .then(file => {
-                            // return Promise.all(types
-                            //     .map(type => this._readLines(file, type, filterFunction, fields)))
-                            //     .then(objects => {
-                            //         return [].concat.apply([], objects);
-                            //     });
-                        });
+                    return this._createWhoisDump(this.internalNames[type]);
                 }));
 
         }

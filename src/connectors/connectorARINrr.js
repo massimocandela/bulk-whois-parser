@@ -14,7 +14,5 @@ export default class ConnectorARINrr extends Connector {
         if (!fs.existsSync(this.cacheDir)) {
             fs.mkdirSync(this.cacheDir,  { recursive: true });
         }
-
     }
-
 }
