@@ -1,2 +1,2 @@
-# as-set-finder
-A lib to find AS-SETS in whois data
+# bulk-whois-parser
+Bulk whois data parser
