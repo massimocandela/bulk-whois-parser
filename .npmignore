@@ -4,6 +4,7 @@ node_modules/
 .npmrc
 .env
 src/
+.cache/
 .gitignore
 .npmignore
 .babelrc
