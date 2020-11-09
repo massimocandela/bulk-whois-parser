@@ -107,6 +107,12 @@ export default class Connector {
             }
         }
 
+        if (object.members) {
+            if (!Array.isArray(object.members)) {
+                object.members = [object.members];
+            }
+        }
+
         return object;
     };
 
