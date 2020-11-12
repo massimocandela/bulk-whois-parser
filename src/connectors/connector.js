@@ -2,7 +2,6 @@ import md5 from "md5";
 import fs from "fs";
 import readline from "readline";
 import zlib from "zlib";
-import ipUtils from "ip-sub";
 import moment from "moment";
 import axios from "axios";
 

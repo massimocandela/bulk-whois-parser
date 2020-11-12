@@ -9,11 +9,11 @@ import cliProgress from "cli-progress";
 import batchPromises from "batch-promises";
 
 
-export default class ConnectorARIN extends Connector {
+export default class ConnectorARINrir extends Connector {
     constructor(params) {
         super(params)
 
-        this.connectorName = "arin";
+        this.connectorName = "arin-rir";
         this.cacheDir += this.connectorName + "/";
         this.statFile = "ftp://ftp.arin.net/pub/stats/arin/delegated-arin-extended-latest";
         this.cacheFile = [this.cacheDir, "arin.inetnums"].join("/").replace("//", "/");
@@ -25,7 +25,9 @@ export default class ConnectorARIN extends Connector {
             fs.mkdirSync(this.cacheDir,  { recursive: true });
         }
 
-        this.useWhois = true;
+        fs.writeFileSync(this.cacheFile, "");
+
+        this.useWhois = false;
 
         this.internalNames = {
             inetnum: "ipv4",
@@ -103,37 +105,36 @@ export default class ConnectorARIN extends Connector {
 
     _createWhoisDump = (type) => {
 
-        if (this._isCacheValid()) {
-            console.log("Using ARIN cached whois data");
-            return Promise.resolve(this.cacheFile);
-        } else {
-            return this._getStatFile()
-                .then(data => {
-                    let out = [];
+        // if (this._isCacheValid()) {
+        //     console.log("Using ARIN cached whois data");
+        //     return Promise.resolve(this.cacheFile);
+        // } else {
+        return this._getStatFile()
+            .then(data => {
+                let out = [];
 
-                    switch(type) {
-                        case "ipv4":
-                            out = this._getInetnums(data, type);
-                            break;
-                        case "ipv6":
-                            out = this._getInetnums(data, type);
-                            break;
-                        case "asn":
-                            out = this._getAsn(data);
-                    }
+                switch(type) {
+                    case "ipv4":
+                        out = this._getInetnums(data, type);
+                        break;
+                    case "ipv6":
+                        out = this._getInetnums(data, type);
+                        break;
+                    case "asn":
+                        out = this._getAsn(data);
+                }
 
-                    return out.reverse();
-                })
-                .then(this._tranformToTheRestOfTheWorldFormat);
-        }
+                return out.reverse();
+            })
+            .then(this._transformToStandardFormat);
+        // }
     };
 
     _getWhoisQuery = (handle) => {
         return whois(handle)
             .then(string => {
                 return string.replace(/^[\s\t]*(\r\n|\n|\r)/gm, "");
-            })
-            .then();
+            });
     };
 
     _getRdapQuery = (object) => {
@@ -143,6 +144,17 @@ export default class ConnectorARIN extends Connector {
             `https://rdap.arin.net/registry/autnum/${handle}` :
             `https://rdap.arin.net/registry/ip/${handle}`;
         const file = this.getCacheFileName(url);
+
+        const getRemarks = (remarks) => {
+            let out = "";
+            for (let {title, description} of remarks) {
+                for (let item of description) {
+                    out += `remarks: ${item}\n`;
+                }
+            }
+
+            return out + "\n";
+        };
 
         if (fs.existsSync(file)) {
             return Promise.resolve(JSON.parse(fs.readFileSync(file, 'utf-8')));
@@ -156,7 +168,24 @@ export default class ConnectorARIN extends Connector {
             })
                 .then(answer => {
                     fs.writeFileSync(file, JSON.stringify(answer.data));
-                    return answer.data;
+                    let out = "";
+
+                    if (answer.data.ipVersion === "v4") {
+                        out += `inetnum: ${answer.data.startAddress} - ${answer.data.endAddress}`;
+                    } else {
+                        out += `inet6num: ${answer.data.startAddress} - ${answer.data.endAddress}`;
+                    }
+
+                    for (let key in answer.data) {
+                        const item = answer.data[key];
+                        if (key === "remarks") {
+                            out += getRemarks(item);
+                        } else if (typeof(item) === "string") {
+                            out += `${key}: ${item}\n`;
+                        }
+                    }
+
+                    return out + "\n";
                 })
                 .catch(error => {
                     console.log(`Cannot retrieve ${handle}`, error.code || error.response.status);
@@ -169,11 +198,12 @@ export default class ConnectorARIN extends Connector {
         if (this.useWhois && object.firstIp) {
             return this._getWhoisQuery(object.firstIp);
         } else {
-            // return this._getRdapQuery(object.asn);
+            return this._getRdapQuery(object);
         }
     };
 
-    _tranformToTheRestOfTheWorldFormat = (items) => {
+    _transformToStandardFormat = (items) => {
+
         const progressBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
         progressBar.start(items.length, 0);
 
@@ -192,7 +222,7 @@ export default class ConnectorARIN extends Connector {
         return Promise
             .all([
                 singleBatch(items.slice(0, halfList)),
-                singleBatch(items.slice(halfList))
+                singleBatch(items.slice(halfList, items.length))
             ])
             .then(() => {
                 progressBar.stop();
@@ -219,10 +249,15 @@ export default class ConnectorARIN extends Connector {
             console.log("ARIN bulk whois data not yet supported");
             return Promise.resolve([]);
         } else {
-            return Promise
-                .all(types.map(type => {
-                    return this._createWhoisDump(this.internalNames[type]);
-                }));
+            return batchPromises(1, types, type => {
+                return this._createWhoisDump(this.internalNames[type]);
+            })
+                .then(() => {
+                    return Promise.all(types.map(type => this._readLines(this.cacheFile, type, filterFunction, fields)))
+                        .then(objects => {
+                            return [].concat.apply([], objects);
+                        });
+                })
 
         }
     }

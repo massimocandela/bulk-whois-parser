@@ -1,6 +1,7 @@
 import Connector from "./connector";
 import ConnectorARINrir from "./connectorARINrir";
 import ConnectorARINrr from "./connectorARINrr";
+import batchPromises from "batch-promises";
 
 export default class ConnectorARIN extends Connector {
     constructor(params) {
@@ -23,7 +24,9 @@ export default class ConnectorARIN extends Connector {
     getObjects = (types, filterFunction, fields) => {
         fields = fields || [];
 
-        return Promise.all(types.map(type => this._getCorrectConnector(type, filterFunction, fields)))
+        return batchPromises(1, types, type => {
+            return this._getCorrectConnector(type, filterFunction, fields)
+        })
             .then(objects => {
                 return [].concat.apply([], objects);
             });

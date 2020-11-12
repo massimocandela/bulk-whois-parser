@@ -39,15 +39,15 @@ export default class WhoisParser {
     };
 }
 
-// const filterFunction = (inetnum) => {
-//
-//     if (inetnum.remarks && inetnum.remarks.length > 0 ) {
-//         return inetnum.remarks.some(i => i.startsWith("Geofeed"));
-//     }
-//
-//     return false;
-// }
-//
-// new WhoisParser({ repos: ["ripe"] })
-//     .getObjects(["inetnum", "inet6num"], filterFunction, null)
-//     .then(console.log);
+const filterFunction = (inetnum) => {
+
+    if (inetnum.remarks && inetnum.remarks.length > 0 ) {
+        return inetnum.remarks.some(i => i.startsWith("Geofeed"));
+    }
+
+    return false;
+}
+
+new WhoisParser({ repos: ["arin"] })
+    .getObjects(["inetnum", "inet6num"], filterFunction, null)
+    .then(console.log);
