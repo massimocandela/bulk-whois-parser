@@ -10,21 +10,28 @@ export default class WhoisParser {
         this.cacheDir = this.params.cacheDir || ".cache/";
 
         this.connectors = {};
+
         const connectors = {
-            "ripe": new ConnectorRIPE(this.params),
-            "afrinic": new ConnectorAFRINIC(this.params),
-            "apnic": new ConnectorAPNIC(this.params),
-            "arin": new ConnectorARIN(this.params),
-            "lacnic": new ConnectorLACNIC(this.params)
+            "ripe": ConnectorRIPE,
+            "afrinic": ConnectorAFRINIC,
+            "apnic": ConnectorAPNIC,
+            "arin": ConnectorARIN,
+            "lacnic": ConnectorLACNIC
         };
 
         if (this.params.repos) {
             for (let repo of this.params.repos) {
-                this.connectors[repo] = connectors[repo];
+                this.connectors[repo] = new connectors[repo](this.params);
             }
         } else {
-            this.connectors = connectors;
+            for (let repo in connectors) {
+                this.connectors[repo] = new connectors[repo](this.params);
+            }
         }
+
+
+
+
 
     };
 
@@ -38,16 +45,16 @@ export default class WhoisParser {
             .then(objects => [].concat.apply([], objects));
     };
 }
-
-const filterFunction = (inetnum) => {
-
-    if (inetnum.remarks && inetnum.remarks.length > 0 ) {
-        return inetnum.remarks.some(i => i.startsWith("Geofeed"));
-    }
-
-    return false;
-}
-
-new WhoisParser({ repos: ["arin"] })
-    .getObjects(["inetnum"], filterFunction,  null)
-    .then(console.log);
+//
+// const filterFunction = (inetnum) => {
+//
+//     if (inetnum.remarks && inetnum.remarks.length > 0 ) {
+//         return inetnum.remarks.some(i => i.startsWith("Geofeed"));
+//     }
+//
+//     return false;
+// }
+//
+// new WhoisParser({ repos: ["arin"] })
+//     .getObjects(["inetnum"], filterFunction,  null)
+//     .then(console.log);
