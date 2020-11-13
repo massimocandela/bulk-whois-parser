@@ -48,6 +48,6 @@ const filterFunction = (inetnum) => {
     return false;
 }
 
-new WhoisParser({ repos: ["arin"] })
-    .getObjects(["inetnum", "inet6num"], filterFunction, null)
-    .then(console.log);
+// new WhoisParser({ repos: ["ripe", "arin"] })
+//     .getObjects(["inetnum", "inet6num"], filterFunction, ["remarks", "inetnum", "inet6num"])
+//     .then(console.log);
