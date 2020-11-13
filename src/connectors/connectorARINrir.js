@@ -6,8 +6,6 @@ import https from "https";
 import ipUtils from "ip-sub";
 import cliProgress from "cli-progress";
 import batchPromises from "batch-promises";
-import tls from "tls";
-tls.DEFAULT_CIPHERS = 'AES128-SHA';
 
 export default class ConnectorARIN extends Connector {
     constructor(params) {
@@ -94,7 +92,7 @@ export default class ConnectorARIN extends Connector {
     };
 
     _getRdapQuery = (prefix) => {
-        const url = `https://rdap.arin.net/registry/ip/${prefix}`;
+        const url = `http://rdap.arin.net/registry/ip/${prefix}`;
         const file = this.getCacheFileName(url);
 
         if (fs.existsSync(file)) {
