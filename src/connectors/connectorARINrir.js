@@ -130,7 +130,7 @@ export default class ConnectorARIN extends Connector {
                     .then(data => {
                         progressBar.increment();
                         if (data) {
-                            const {startAddress, endAddress, remarks} = data;
+                            const {startAddress, endAddress, remarks, events} = data;
                             const inetnum = {};
 
                             if (remarks) {
@@ -144,6 +144,10 @@ export default class ConnectorARIN extends Connector {
                                     inetnum.inet6num = `${startAddress} - ${endAddress}`;
                                     inetnum.type = "inet6num";
                                 }
+                                const lastChanges = (events || [])
+                                    .filter(i => i.eventAction === "last changed")
+                                    .pop();
+                                inetnum["last-modified"] = lastChanges ? lastChanges.eventDate : null;
                                 inetnum.remarks = remarksArray;
 
                                 for (let prop in data) {
