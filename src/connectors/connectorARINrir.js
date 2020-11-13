@@ -2,7 +2,7 @@ import Connector from "./connector";
 import axios from "axios";
 import fs from "fs";
 import moment from "moment";
-import https from "https";
+import http from "http";
 import ipUtils from "ip-sub";
 import cliProgress from "cli-progress";
 import batchPromises from "batch-promises";
@@ -17,7 +17,7 @@ export default class ConnectorARIN extends Connector {
         this.cacheFile = [this.cacheDir, "arin.inetnums"].join("/").replace("//", "/");
         this.daysWhoisCache = this.params.defaultCacheDays;
 
-        this.httpsAgent = new https.Agent({ keepAlive: true });
+        this.httpAgent = new http.Agent({ keepAlive: true });
 
         if (!fs.existsSync(this.cacheDir)) {
             fs.mkdirSync(this.cacheDir,  { recursive: true });
@@ -98,7 +98,7 @@ export default class ConnectorARIN extends Connector {
         if (fs.existsSync(file)) {
             return Promise.resolve(JSON.parse(fs.readFileSync(file, 'utf-8')));
         } else {
-            axios.defaults.httpsAgent = this.httpsAgent;
+            axios.defaults.httpAgent = this.httpAgent;
             return axios({
                 url,
                 method: 'GET',
