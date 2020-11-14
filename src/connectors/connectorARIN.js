@@ -27,9 +27,7 @@ export default class ConnectorARIN extends Connector {
         return batchPromises(1, types, type => {
             return this._getCorrectConnector(type, filterFunction, fields)
         })
-            .then(objects => {
-                return [].concat.apply([], objects);
-            });
+            .then(objects => [].concat.apply([], objects));
     }
 
 }

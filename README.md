@@ -1,27 +1,47 @@
 # bulk-whois-parser
-Bulk whois data parser
+Bulk whois data parser.
+It automatically downloads and caches bulk whois data.
+It parses and filters the data, and returns it in JavaScript objects. It also removes some format differences across the various whois servers.
 
-Example:
+Install:
+
+```bash
+npm install bulk-whois-parser
+```
+
+Import:
+
+```js
+import WhoisParser from "bulk-whois-parser";
+```
+
+
+Usage example:
 
 ```javascript
 
 const filterFunction = (object) => {
-    // A function that returns true or false
-    // Used to filter the results
+    // A function that returns true or false, used to filter the results
+    // Make this function as selective as possible, since che amount of whois data
+    // can be overwhelming.
 }
 
-const fields = ["inetnum", "remarks"]; // The fields you want to see in the object. Use null to get all the fields
+// The fields you want to see in the object. Use null to get all the fields
+const fields = ["inetnum", "inet6num", "remarks"]; 
 
 
-new WhoisParser({ repos: ["ripe", "lacnic", "apnic", "afrinic"] })
+new WhoisParser({ repos: ["ripe", "lacnic", "apnic", "afrinic", "arin"] })
     .getObjects(["inetnum", "inet6num"], filterFunction, fields)
-    .then(console.log);
+    .then(objects => {
+        // Do something with the objects (array)
+    });
 ```
 
+> You don't have to pass any file or anything, the library will automatically download the data.
 
-This is an example of result
+Result example:
 
-```json
+```js
 [
   {
     inet6num: '2001:67c:370::/48',
@@ -53,3 +73,5 @@ This is an example of result
   ...
 ]
 ```
+
+Enjoy!

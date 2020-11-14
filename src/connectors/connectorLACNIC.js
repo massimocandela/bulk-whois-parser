@@ -9,7 +9,7 @@ export default class ConnectorLACNIC extends Connector {
         this.cacheDir += this.connectorName + "/";
         this.dumpUrl = this.params.dumpUrl || "http://ftp.lacnic.net/lacnic/dbase/lacnic.db.gz";
         this.cacheFile = [this.cacheDir, "lacnic.db.gz"].join("/").replace("//", "/");
-        this.daysWhoisCache = this.params.defaultCacheDays || 1;
+        this.daysWhoisCache = this.params.defaultCacheDays || 2;
 
         if (!fs.existsSync(this.cacheDir)) {
             fs.mkdirSync(this.cacheDir,  { recursive: true });

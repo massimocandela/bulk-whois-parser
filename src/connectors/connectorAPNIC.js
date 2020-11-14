@@ -31,7 +31,7 @@ export default class ConnectorAPNIC extends Connector {
         ];
 
         this.cacheFiles = this.dumpUrls.map(this.getCacheFileName);
-        this.daysWhoisCache = this.params.defaultCacheDays || 1;
+        this.daysWhoisCache = this.params.defaultCacheDays || 2;
 
         if (!fs.existsSync(this.cacheDir)) {
             fs.mkdirSync(this.cacheDir,  { recursive: true });

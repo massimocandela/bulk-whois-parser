@@ -166,7 +166,7 @@ export default class Connector {
         fields = fields || [];
         return this._getDump()
             .then(file => {
-                console.log(`[${this.connectorName}] Parsing whois data`);
+                console.log(`[${this.connectorName}] Parsing whois data: ${types}`);
                 return Promise.all(types.map(type => this._readLines(file, type, filterFunction, fields)))
                     .then(objects => {
                         return [].concat.apply([], objects);

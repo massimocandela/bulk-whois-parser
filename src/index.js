@@ -45,7 +45,7 @@ export default class WhoisParser {
             .then(objects => [].concat.apply([], objects));
     };
 }
-//
+
 // const filterFunction = (inetnum) => {
 //
 //     if (inetnum.remarks && inetnum.remarks.length > 0 ) {
@@ -56,5 +56,5 @@ export default class WhoisParser {
 // }
 //
 // new WhoisParser({ repos: ["arin"] })
-//     .getObjects(["inetnum"], filterFunction,  null)
+//     .getObjects(["inet6num"], filterFunction,  null)
 //     .then(console.log);

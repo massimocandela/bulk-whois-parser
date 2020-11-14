@@ -15,7 +15,7 @@ export default class ConnectorARIN extends Connector {
         this.cacheDir += this.connectorName + "/";
         this.statFile = "ftp://ftp.arin.net/pub/stats/arin/delegated-arin-extended-latest";
         this.cacheFile = [this.cacheDir, "arin.inetnums"].join("/").replace("//", "/");
-        this.daysWhoisCache = this.params.defaultCacheDays;
+        this.daysWhoisCache = this.params.defaultCacheDays || 7;
 
         this.httpAgent = new http.Agent({ keepAlive: true });
 
@@ -52,9 +52,9 @@ export default class ConnectorARIN extends Connector {
         return `${firstIp}/${bits}`;
     };
 
-    _createWhoisDump = () => {
-        if (this._isCacheValid()) {
-            console.log("Using ARIN cached whois data");
+    _createWhoisDump = (types) => {
+        if (this._isCacheValid(this.cacheFile)) {
+            console.log(`[arin] Using cached whois data: ${types}`);
             return Promise.resolve(JSON.parse(fs.readFileSync(this.cacheFile, 'utf-8')));
         } else {
             return this._getStatFile()
@@ -69,6 +69,7 @@ export default class ConnectorARIN extends Connector {
                                 cc,
                                 type,
                                 prefix: this._toPrefix(firstIp, hosts),
+                                firstIp,
                                 hosts,
                                 date,
                                 status,
@@ -95,7 +96,7 @@ export default class ConnectorARIN extends Connector {
         const url = `http://rdap.arin.net/registry/ip/${prefix}`;
         const file = this.getCacheFileName(url);
 
-        if (fs.existsSync(file)) {
+        if (this._isCacheValid(file)) {
             return Promise.resolve(JSON.parse(fs.readFileSync(file, 'utf-8')));
         } else {
             axios.defaults.httpAgent = this.httpAgent;
@@ -139,14 +140,15 @@ export default class ConnectorARIN extends Connector {
                                     inetnum.inetnum = `${startAddress} - ${endAddress}`;
                                     inetnum.type = "inetnum";
                                 } else {
-                                    inetnum.inet6num = `${startAddress} - ${endAddress}`;
+                                    inetnum.inet6num = prefix;
                                     inetnum.type = "inet6num";
                                 }
                                 const lastChanges = (events || [])
                                     .filter(i => i.eventAction === "last changed")
                                     .pop();
                                 inetnum["last-modified"] = lastChanges ? lastChanges.eventDate : null;
-                                inetnum.remarks = remarksArray;
+
+                                inetnum.remarks = [].concat.apply([], remarksArray);
 
                                 for (let prop in data) {
                                     if (typeof(data[prop]) === "string" && !inetnum[prop]) {
@@ -175,9 +177,10 @@ export default class ConnectorARIN extends Connector {
             })
     };
 
-    _isCacheValid = () => {
-        if (fs.existsSync(this.cacheFile)) {
-            const stats = fs.statSync(this.cacheFile);
+    _isCacheValid = (file) => {
+
+        if (fs.existsSync(file)) {
+            const stats = fs.statSync(file);
             const lastDownloaded = moment(stats.mtime);
 
             if (moment(lastDownloaded).diff(moment(), 'days') <= this.daysWhoisCache){
@@ -188,14 +191,29 @@ export default class ConnectorARIN extends Connector {
         return false;
     };
 
-    getObjects = (types) => {
+    getObjects = (types, filterFunction, fields) => {
         if (this.params.arinBulk) {
             console.log("ARIN bulk whois data not yet supported");
             return Promise.resolve([]);
         } else {
-            return this._createWhoisDump()
+            return this._createWhoisDump(types)
                 .then(data => {
-                    return data.filter(i => types.includes(i.type));
+                    const filtered = data.filter(i => types.includes(i.type) && filterFunction(i));
+                    if (fields && fields.length) {
+                        return filtered
+                            .map(item => {
+                                const out = {};
+                                for (let k in item) {
+                                    if (fields.includes(k)) {
+                                        out[k] = item[k];
+                                    }
+                                }
+
+                                return out;
+                            });
+                    } else {
+                        return filtered;
+                    }
                 });
         }
     }
