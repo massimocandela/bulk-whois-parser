@@ -1,7 +1,7 @@
 # bulk-whois-parser
 Bulk whois data parser.
 It automatically downloads and caches bulk whois data.
-It parses and filters the data, and returns it in JavaScript objects. It also removes some format differences across the various whois servers.
+It parses and filters the data, and returns it as JavaScript objects. It also removes some format differences across the various whois servers.
 
 Install:
 
@@ -22,7 +22,7 @@ Usage example:
 
 const filterFunction = (object) => {
     // A function that returns true or false, used to filter the results
-    // Make this function as selective as possible, since che amount of whois data
+    // Make this function as selective as possible, since the amount of whois data
     // can be overwhelming.
 }
 
