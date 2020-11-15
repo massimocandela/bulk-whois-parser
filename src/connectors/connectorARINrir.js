@@ -63,7 +63,8 @@ export default class ConnectorARIN extends Connector {
                         .split("\n")
                         .filter(line => line.includes("ipv4") || line.includes("ipv6") )
                         .map(line => line.split("|"))
-                        .map(([rir, cc, type, firstIp, hosts, date, status, hash]) => {
+                        .map(([rir, cc, type, firstIpUp, hosts, date, status, hash]) => {
+                            const firstIp = firstIpUp.toLowerCase();
                             return {
                                 rir,
                                 cc,
@@ -108,6 +109,7 @@ export default class ConnectorARIN extends Connector {
             })
                 .then(answer => {
                     fs.writeFileSync(file, JSON.stringify(answer.data));
+
                     return answer.data;
                 })
                 .catch(error => {
@@ -125,11 +127,11 @@ export default class ConnectorARIN extends Connector {
             return batchPromises(4, items, item => {
                 const prefix = item.prefix;
 
-                return this._getRdapQuery(prefix)
+                return this._getRdapQuery(item.firstIp)
                     .then(data => {
                         progressBar.increment();
                         if (data) {
-                            const {startAddress, endAddress, remarks, events} = data;
+                            const { startAddress, endAddress, remarks, events } = data;
                             const inetnum = {};
 
                             if (remarks) {
