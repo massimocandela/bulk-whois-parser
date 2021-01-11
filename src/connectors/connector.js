@@ -1,9 +1,9 @@
-import md5 from "md5";
+import axios from "axios";
 import fs from "fs";
+import md5 from "md5";
+import moment from "moment";
 import readline from "readline";
 import zlib from "zlib";
-import moment from "moment";
-import axios from "axios";
 
 export default class Connector {
     constructor(params) {
@@ -162,7 +162,7 @@ export default class Connector {
         }
     }
 
-    getObjects = (types, filterFunction, fields) => {
+    getObjects(types, filterFunction, fields) {
         fields = fields || [];
         return this._getDump()
             .then(file => {
