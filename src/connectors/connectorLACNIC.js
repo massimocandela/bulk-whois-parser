@@ -1,18 +1,33 @@
 import Connector from "./connector";
-import fs from "fs";
+import ConnectorAPNICrir from "./ConnectorAPNICrir";
+import ConnectorAPNICrr from "./ConnectorAPNICrr";
+import batchPromises from "batch-promises";
 
 export default class ConnectorLACNIC extends Connector {
     constructor(params) {
         super(params)
 
-        this.connectorName = "lacnic";
-        this.cacheDir += this.connectorName + "/";
-        this.dumpUrl = this.params.dumpUrl || "http://ftp.lacnic.net/lacnic/dbase/lacnic.db.gz";
-        this.cacheFile = [this.cacheDir, "lacnic.db.gz"].join("/").replace("//", "/");
-        this.daysWhoisCache = this.params.defaultCacheDays || 2;
-
-        if (!fs.existsSync(this.cacheDir)) {
-            fs.mkdirSync(this.cacheDir,  { recursive: true });
-        }
+        this.rir = new ConnectorAPNICrir(params);
+        this.rr = new ConnectorAPNICrr(params);
     }
+
+
+    _getCorrectConnector = (type, filterFunction, fields) => {
+        if (["route", "route6", "as-set", "aut-num", "mntner", "person"].includes(type)) {
+            return this.rr.getObjects([type], filterFunction, fields);
+        } else {
+            return this.rir.getObjects([type], filterFunction, fields);
+        }
+    };
+
+
+    getObjects = (types, filterFunction, fields) => {
+        fields = fields || [];
+
+        return batchPromises(1, types, type => {
+            return this._getCorrectConnector(type, filterFunction, fields)
+        })
+            .then(objects => [].concat.apply([], objects));
+    }
+
 }
