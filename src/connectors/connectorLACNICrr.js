@@ -7,7 +7,7 @@ export default class ConnectorLACNIC extends Connector {
 
         this.connectorName = "lacnic-rr";
         this.cacheDir += this.connectorName + "/";
-        this.dumpUrl = this.params.dumpUrl || "http://ftp.lacnic.net/lacnic/rr/lacnic.db.gz";
+        this.dumpUrl = this.params.dumpUrl || "http://ftp.lacnic.net/lacnic/irr/lacnic.db.gz";
         this.cacheFile = [this.cacheDir, "lacnic-rr.db.gz"].join("/").replace("//", "/");
         this.daysWhoisCache = this.params.defaultCacheDays || 2;
 
