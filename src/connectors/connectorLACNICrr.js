@@ -1,5 +1,5 @@
-import fs from "fs"
-import Connector from "./connector"
+import fs from "fs";
+import Connector from "./connector";
 
 export default class ConnectorLACNICrr extends Connector {
     constructor(params) {
@@ -7,7 +7,7 @@ export default class ConnectorLACNICrr extends Connector {
 
         this.connectorName = "lacnic-rr";
         this.cacheDir += this.connectorName + "/";
-        this.dumpUrl = this.params.dumpUrl || "http://ftp.lacnic.net/lacnic/rr/lacnic.db.gz";
+        this.dumpUrl = this.params.dumpUrl || "http://ftp.lacnic.net/lacnic/irr/lacnic.db.gz";
         this.cacheFile = [this.cacheDir, "lacnic.db.gz"].join("/").replace("//", "/");
         this.daysWhoisCache = this.params.defaultCacheDays || 2;
 
