@@ -55,6 +55,6 @@ export default class WhoisParser {
 //     return false;
 // }
 //
-// new WhoisParser({ repos: ["arin"] })
-//     .getObjects(["inet6num"], filterFunction,  null)
+// new WhoisParser({ repos: ["lacnic"] })
+//     .getObjects(["as-set"], filterFunction,  null)
 //     .then(console.log);

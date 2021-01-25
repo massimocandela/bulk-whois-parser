@@ -1,7 +1,7 @@
 import Connector from "./connector";
 import fs from "fs";
 
-export default class ConnectorLACNIC extends Connector {
+export default class ConnectorLACNICrir extends Connector {
     constructor(params) {
         super(params)
 
