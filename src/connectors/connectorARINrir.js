@@ -179,20 +179,6 @@ export default class ConnectorARIN extends Connector {
             })
     };
 
-    _isCacheValid = (file) => {
-
-        if (fs.existsSync(file)) {
-            const stats = fs.statSync(file);
-            const lastDownloaded = moment(stats.mtime);
-
-            if (moment(lastDownloaded).diff(moment(), 'days') <= this.daysWhoisCache){
-                return true;
-            }
-        }
-
-        return false;
-    };
-
     getObjects = (types, filterFunction, fields) => {
         if (this.params.arinBulk) {
             console.log("ARIN bulk whois data not yet supported");

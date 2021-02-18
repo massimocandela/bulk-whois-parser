@@ -124,9 +124,9 @@ export default class Connector {
     _isCacheValid = () => {
         if (fs.existsSync(this.cacheFile)) {
             const stats = fs.statSync(this.cacheFile);
-            const lastDownloaded = moment(stats.mtime);
+            const lastDownloaded = moment(stats.ctime);
 
-            if (moment(lastDownloaded).diff(moment(), 'days') <= this.daysWhoisCache){
+            if (moment(moment()).diff(lastDownloaded, 'days') <= this.daysWhoisCache){
                 return true;
             }
         }

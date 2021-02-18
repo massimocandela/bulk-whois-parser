@@ -38,20 +38,6 @@ export default class ConnectorAPNIC extends Connector {
         }
     }
 
-
-    _isCacheValid = () => {
-        if (this.cacheFiles.every(fs.existsSync)) {
-            const stats = fs.statSync(this.cacheFiles[0]);
-            const lastDownloaded = moment(stats.mtime);
-
-            if (moment(lastDownloaded).diff(moment(), 'days') <= this.daysWhoisCache){
-                return true;
-            }
-        }
-
-        return false;
-    };
-
     _getDumpFile = (url) => {
         const cacheFile = this.getCacheFileName(url);
         const writer = fs.createWriteStream(cacheFile);
