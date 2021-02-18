@@ -1,9 +1,11 @@
 {
   "name": "bulk-whois-parser",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "A lib to parse bulk whois data",
   "main": "dist/index.js",
-  "bin": "dist/index.js",
+  "bin": {
+    "bulk-whois-parser": "dist/index.js"
+  },
   "scripts": {
     "babel": "./node_modules/.bin/babel",
     "release": "dotenv release-it",
