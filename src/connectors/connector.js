@@ -92,14 +92,6 @@ export default class Connector {
     };
 
     getStandardObject = (object) => {
-        // if (object.inetnum) {
-        //     try {
-        //         object.inetnum = ipUtils.ipRangeToCidr(...object.inetnum.split("-").map(i => i.trim()));
-        //     } catch(e) {
-        //         // Nothing
-        //     }
-        // }
-
         if (object.remarks) {
             if (!Array.isArray(object.remarks)) {
                 object.remarks = [object.remarks];

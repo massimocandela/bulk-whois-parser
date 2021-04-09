@@ -45,16 +45,3 @@ export default class WhoisParser {
             .then(objects => [].concat.apply([], objects));
     };
 }
-
-// const filterFunction = (inetnum) => {
-//
-//     if (inetnum.remarks && inetnum.remarks.length > 0 ) {
-//         return inetnum.remarks.some(i => i.startsWith("Geofeed"));
-//     }
-//
-//     return false;
-// }
-//
-// new WhoisParser({ repos: ["lacnic"] })
-//     .getObjects(["as-set"], filterFunction,  null)
-//     .then(console.log);
