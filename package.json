@@ -34,11 +34,11 @@
   "homepage": "https://github.com/massimocandela/bulk-whois-parser#readme",
   "devDependencies": {
     "@babel/cli": "^7.13.16",
-    "@babel/core": "^7.14.0",
-    "@babel/node": "^7.13.13",
+    "@babel/core": "^7.14.2",
+    "@babel/node": "^7.14.2",
     "@babel/plugin-proposal-class-properties": "^7.13.0",
-    "@babel/plugin-proposal-object-rest-spread": "^7.13.8",
-    "@babel/preset-env": "^7.14.1",
+    "@babel/plugin-proposal-object-rest-spread": "^7.14.2",
+    "@babel/preset-env": "^7.14.2",
     "dotenv-cli": "^4.0.0",
     "release-it": "^14.6.2"
   },
