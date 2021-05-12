@@ -1,7 +1,6 @@
 import Connector from "./connector";
 import axios from "axios";
 import fs from "fs";
-import moment from "moment";
 
 export default class ConnectorAPNIC extends Connector {
     constructor(params) {
@@ -45,7 +44,10 @@ export default class ConnectorAPNIC extends Connector {
         return axios({
             url,
             method: 'GET',
-            responseType: 'stream'
+            responseType: 'stream',
+            header: {
+                'User-Agent': this.userAgent
+            }
         })
             .then( (response) => {
 

@@ -1,7 +1,6 @@
 import Connector from "./connector";
 import axios from "axios";
 import fs from "fs";
-import moment from "moment";
 import http from "http";
 import ipUtils from "ip-sub";
 import cliProgress from "cli-progress";
@@ -36,6 +35,9 @@ export default class ConnectorARIN extends Connector {
             return axios({
                 url: this.statFile,
                 method: 'GET',
+                header: {
+                    'User-Agent': this.userAgent
+                }
             })
                 .then(response => {
 
@@ -105,7 +107,10 @@ export default class ConnectorARIN extends Connector {
                 url,
                 method: 'GET',
                 timeout: 20000,
-                responseType: 'json'
+                responseType: 'json',
+                header: {
+                    'User-Agent': this.userAgent
+                }
             })
                 .then(answer => {
                     fs.writeFileSync(file, JSON.stringify(answer.data));

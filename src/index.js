@@ -6,7 +6,9 @@ import ConnectorARIN from "./connectors/connectorARIN";
 
 export default class WhoisParser {
     constructor(params) {
-        this.params = params || {};
+        this.params = params || {
+            userAgent: "bulk-whois-parser"
+        };
         this.cacheDir = this.params.cacheDir || ".cache/";
 
         this.connectors = {};
@@ -28,10 +30,6 @@ export default class WhoisParser {
                 this.connectors[repo] = new connectors[repo](this.params);
             }
         }
-
-
-
-
 
     };
 

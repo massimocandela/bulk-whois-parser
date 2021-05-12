@@ -8,6 +8,7 @@ import axios from "axios";
 export default class Connector {
     constructor(params) {
         this.params = params || {};
+        this.userAgent = params.userAgent;
         this.connectorName = "connector";
         this.cacheDir = this.params.cacheDir || ".cache/";
         this.cacheFile = null;
@@ -138,7 +139,10 @@ export default class Connector {
             return axios({
                 url: this.dumpUrl,
                 method: 'GET',
-                responseType: 'stream'
+                responseType: 'stream',
+                header: {
+                    'User-Agent': this.userAgent
+                }
             })
                 .then( (response) => {
 
