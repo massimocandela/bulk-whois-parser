@@ -1,6 +1,6 @@
 import Connector from "./connector";
-import ConnectorAPNICrir from "./ConnectorLACNICrir";
-import ConnectorAPNICrr from "./ConnectorLACNICrr";
+import ConnectorAPNICrir from "./connectorLACNICrir";
+import ConnectorAPNICrr from "./connectorLACNICrr";
 import batchPromises from "batch-promises";
 
 export default class ConnectorLACNIC extends Connector {
