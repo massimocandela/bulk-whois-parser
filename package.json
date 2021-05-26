@@ -40,7 +40,7 @@
     "@babel/plugin-proposal-object-rest-spread": "^7.14.2",
     "@babel/preset-env": "^7.14.2",
     "dotenv-cli": "^4.0.0",
-    "release-it": "^14.6.2"
+    "release-it": "^14.7.0"
   },
   "dependencies": {
     "axios": "^0.21.1",
