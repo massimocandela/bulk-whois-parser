@@ -1,6 +1,6 @@
 {
   "name": "bulk-whois-parser",
-  "version": "1.0.21",
+  "version": "1.0.22",
   "description": "A lib to parse bulk whois data",
   "main": "dist/index.js",
   "bin": {
