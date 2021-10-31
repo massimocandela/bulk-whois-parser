@@ -75,10 +75,10 @@ export default class ConnectorAPNIC extends Connector {
     _getDump = () => {
 
         if (this._isCacheValid()) {
-            console.log("[APNIC] Using cached whois data");
+            console.log("[apnic] Using cached whois data");
             return Promise.resolve(this.cacheFiles);
         } else {
-            console.log("[APNIC] Downloading whois data");
+            console.log("[apnic] Downloading whois data");
 
             return Promise
                 .all(this.dumpUrls.map(this._getDumpFile));
