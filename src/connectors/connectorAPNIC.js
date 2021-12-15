@@ -1,6 +1,7 @@
 import Connector from "./connector";
 import axios from "axios";
 import fs from "fs";
+import moment from "moment";
 
 export default class ConnectorAPNIC extends Connector {
     constructor(params) {
@@ -70,6 +71,22 @@ export default class ConnectorAPNIC extends Connector {
         return Promise
             .all(files.map(file => this._readLines(file, type, filterFunction, fields)))
             .then(objects => [].concat.apply([], objects));
+    };
+
+    _isCacheValid = () => {
+        return this.cacheFiles
+            .every(file => {
+                if (fs.existsSync(file)) {
+                    const stats = fs.statSync(file);
+                    const lastDownloaded = moment(stats.ctime);
+
+                    if (moment(moment()).diff(lastDownloaded, 'days') <= this.daysWhoisCache){
+                        return true;
+                    }
+                }
+
+                return false;
+            });
     };
 
     _getDump = () => {
