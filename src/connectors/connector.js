@@ -162,12 +162,12 @@ export default class Connector {
         }
     }
 
-    getObjects = (types, filterFunction, fields) => {
+    getObjects = (types, filterFunction, fields, forEachFunction) => {
         fields = fields || [];
         return this._getDump()
             .then(file => {
                 console.log(`[${this.connectorName}] Parsing whois data: ${types}`);
-                return Promise.all(types.map(type => this._readLines(file, type, filterFunction, fields)))
+                return Promise.all(types.map(type => this._readLines(file, type, filterFunction, fields, forEachFunction)))
                     .then(objects => {
                         return [].concat.apply([], objects);
                     });

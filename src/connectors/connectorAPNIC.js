@@ -67,9 +67,9 @@ export default class ConnectorAPNIC extends Connector {
     }
 
 
-    _multiReadLines = (files, type, filterFunction, fields = []) => {
+    _multiReadLines = (files, type, filterFunction, fields = [], forEachFunction) => {
         return Promise
-            .all(files.map(file => this._readLines(file, type, filterFunction, fields)))
+            .all(files.map(file => this._readLines(file, type, filterFunction, fields, forEachFunction)))
             .then(objects => [].concat.apply([], objects));
     };
 
@@ -103,12 +103,12 @@ export default class ConnectorAPNIC extends Connector {
     }
 
 
-    getObjects = (types, filterFunction, fields) => {
+    getObjects = (types, filterFunction, fields, forEachFunction) => {
 
         return this._getDump()
             .then(file => {
                 console.log(`[${this.connectorName}] Parsing whois data`);
-                return Promise.all(types.map(type => this._multiReadLines(file, type, filterFunction, fields)))
+                return Promise.all(types.map(type => this._multiReadLines(file, type, filterFunction, fields, forEachFunction)))
                     .then(objects => {
                         return [].concat.apply([], objects);
                     });

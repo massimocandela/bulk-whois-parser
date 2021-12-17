@@ -12,20 +12,20 @@ export default class ConnectorARIN extends Connector {
 
     };
 
-    _getCorrectConnector = (type, filterFunction, fields) => {
+    _getCorrectConnector = (type, filterFunction, fields, forEachFunction) => {
         if (["inetnum", "inet6num"].includes(type)) {
-            return this.rir.getObjects([type], filterFunction, fields);
+            return this.rir.getObjects([type], filterFunction, fields, forEachFunction);
         } else {
-            return this.rr.getObjects([type], filterFunction, fields);
+            return this.rr.getObjects([type], filterFunction, fields, forEachFunction);
         }
     };
 
 
-    getObjects = (types, filterFunction, fields) => {
+    getObjects = (types, filterFunction, fields, forEachFunction) => {
         fields = fields || [];
 
         return batchPromises(1, types, type => {
-            return this._getCorrectConnector(type, filterFunction, fields)
+            return this._getCorrectConnector(type, filterFunction, fields, forEachFunction)
         })
             .then(objects => [].concat.apply([], objects));
     }

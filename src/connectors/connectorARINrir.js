@@ -184,7 +184,7 @@ export default class ConnectorARIN extends Connector {
             })
     };
 
-    getObjects = (types, filterFunction, fields) => {
+    getObjects = (types, filterFunction, fields, forEachFunction) => {
         if (this.params.arinBulk) {
             console.log("ARIN bulk whois data not yet supported");
             return Promise.resolve([]);
@@ -207,6 +207,17 @@ export default class ConnectorARIN extends Connector {
                     } else {
                         return filtered;
                     }
+                })
+                .then(data => {
+                    if (!!forEachFunction) {
+                        for (let i of data) {
+                            forEachFunction(i);
+                        }
+
+                        return [];
+                    }
+
+                    return data;
                 });
         }
     }
