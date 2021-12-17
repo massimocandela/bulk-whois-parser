@@ -33,13 +33,22 @@ export default class WhoisParser {
 
     };
 
-    getObjects = (types, filterFunction, fields) => {
+    _getObjects = (types, filterFunction, fields, forEachFunction) => {
         fields = fields || [];
         return Promise
             .all(Object
                 .keys(this.connectors)
-                .map(key => this.connectors[key].getObjects(types, filterFunction, fields))
+                .map(key => this.connectors[key].getObjects(types, filterFunction, fields, forEachFunction))
             )
             .then(objects => [].concat.apply([], objects));
+    };
+
+    getObjects = (types, filterFunction, fields) => {
+        return this._getObjects(types, filterFunction, fields, null);
+    };
+
+    forEachObject = (types, filterFunction, fields, forEachFunction) => {
+        return this._getObjects(types, filterFunction, fields, forEachFunction)
+            .then(() => null);
     };
 }

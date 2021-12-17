@@ -20,7 +20,7 @@ export default class Connector {
         }
     }
 
-    _readLines = (compressedFile, type, filterFunction, fields = []) => {
+    _readLines = (compressedFile, type, filterFunction, fields = [], forEachFunction=null) => {
         return new Promise((resolve, reject) => {
 
             if (!filterFunction) {
@@ -50,7 +50,11 @@ export default class Connector {
 
                         const objTmp = this.getStandardObject(lastObject);
                         if (filterFunction(objTmp)) {
-                            objects.push(objTmp);
+                            if (!!forEachFunction) {
+                                forEachFunction(objTmp);
+                            } else {
+                                objects.push(objTmp);
+                            }
                         }
                         lastObject = null;
 
@@ -168,5 +172,5 @@ export default class Connector {
                         return [].concat.apply([], objects);
                     });
             });
-    }
+    };
 }
