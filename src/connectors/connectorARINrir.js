@@ -27,24 +27,16 @@ export default class ConnectorARIN extends Connector {
     _getStatFile = () => {
         console.log(`[arin] Downloading stat file`);
 
-        const file = this.getCacheFileName(this.statFile);
-
-        if (fs.existsSync(file)){
-            return Promise.resolve(fs.readFileSync(file, 'utf-8'));
-        } else {
-            return axios({
-                url: this.statFile,
-                method: 'GET',
-                header: {
-                    'User-Agent': this.userAgent
-                }
-            })
-                .then(response => {
-
-                    fs.writeFileSync(file, response.data);
-                    return response.data;
-                });
-        }
+        return axios({
+            url: this.statFile,
+            method: 'GET',
+            header: {
+                'User-Agent': this.userAgent
+            }
+        })
+            .then(response => {
+                return response.data;
+            });
     };
 
     _toPrefix = (firstIp, hosts) => {
