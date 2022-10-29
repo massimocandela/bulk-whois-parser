@@ -8,7 +8,7 @@ import axios from "axios";
 export default class Connector {
     constructor(params) {
         this.params = params || {};
-        this.userAgent = params.userAgent;
+        this.userAgent = params.userAgent || "bulk-whois-parser";
         this.connectorName = "connector";
         this.cacheDir = this.params.cacheDir || ".cache/";
         this.cacheFile = null;
@@ -149,7 +149,6 @@ export default class Connector {
                 }
             })
                 .then( (response) => {
-
                     response.data.pipe(writer);
 
                     return new Promise((resolve, reject) => {
