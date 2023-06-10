@@ -5,6 +5,7 @@ import http from "http";
 import ipUtils from "ip-sub";
 import cliProgress from "cli-progress";
 import batchPromises from "batch-promises";
+import webWhois from "whois";
 
 export default class ConnectorARIN extends Connector {
     constructor(params) {
@@ -27,16 +28,23 @@ export default class ConnectorARIN extends Connector {
     _getStatFile = () => {
         console.log(`[arin] Downloading stat file`);
 
-        return axios({
-            url: this.statFile,
-            method: 'GET',
-            header: {
-                'User-Agent': this.userAgent
-            }
-        })
-            .then(response => {
-                return response.data;
-            });
+        const cacheFile = `${this.cacheDir}arin-stat-file`;
+
+        const operation = () => {
+            console.log("running")
+            return axios({
+                url: this.statFile,
+                method: 'GET',
+                header: {
+                    'User-Agent': this.userAgent
+                }
+            })
+                .then(response => response.data);
+
+        }
+
+        return this.cacheOperationOutput(operation, cacheFile, this.daysWhoisCache)
+            .then(data => JSON.parse(data));
     };
 
     _toPrefix = (firstIp, hosts) => {
@@ -45,6 +53,94 @@ export default class ConnectorARIN extends Connector {
 
         return `${firstIp}/${bits}`;
     };
+
+
+    _addSubAllocations = (stats) => {
+        const cacheFile = `${this.cacheDir}arin-stat-file`;
+
+        return Promise.all([
+            ...this.cacheOperationOutput(() => this._addSubAllocationsByType(stats, "ipv4"), cacheFile + "v4",  7)
+                .then(data => JSON.parse(data)),
+            ...this.cacheOperationOutput(() => this._addSubAllocationsByType(stats, "ipv6"), cacheFile + "v6",  7)
+                .then(data => JSON.parse(data))
+        ]);
+    }
+
+
+    _addSubAllocationsByType = (stats, type) => {
+        console.log(`[arin] Detecting sub allocations ${type}`);
+
+        stats = stats.filter(i => i.type === type && i.status === "allocated");
+        const out = stats;
+
+        const progressBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+        progressBar.start(stats.length, 0);
+
+        return batchPromises(1, stats, item => {
+
+            return this._whois(item.prefix)
+                .then(data => {
+
+                    progressBar.increment();
+
+                    try {
+                        const ips = data
+                            .map(i => i.data)
+                            .flat()
+                            .join("")
+                            .split("\n")
+                            .map(i => i.trim().split(" "))
+                            .filter(i => i.length >= 5)
+                            .map(i => i.filter(n => ipUtils.isValidIP(n)))
+                            .filter(i => i.length === 2)
+
+                        for (let [firstIp, lastIp] of [...new Set(ips)]) {
+
+                            const prefixes = ipUtils.ipRangeToCidr(firstIp, lastIp);
+
+                            for (let prefix of prefixes) {
+
+                                out.push({
+                                    rir: "arin",
+                                    type,
+                                    prefix,
+                                    firstIp,
+                                    status: "allocated"
+                                });
+                            }
+                        }
+
+                    } catch (error) {
+                    }
+                })
+                .catch(console.log);
+
+        })
+            .catch(console.log)
+            .then(() => {
+
+                progressBar.stop();
+                const index = {};
+                for (let i of out) {
+                    index[i.firstIp] = i;
+                }
+
+                return Object.values(index);
+            })
+
+    }
+
+    _whois = (prefix) => {
+        return new Promise((resolve, reject) => {
+            webWhois.lookup(`r > ${prefix}`, { follow: 0, verbose: true, timeout: 5000, returnPartialOnTimeout: true, server: "whois.arin.net" }, (error, data) => {
+                if (error) {
+                    reject(error)
+                } else {
+                    resolve(data);
+                }
+            })
+        });
+    }
 
     _createWhoisDump = (types) => {
         if (this._isCacheValid(this.cacheFile)) {
@@ -61,14 +157,12 @@ export default class ConnectorARIN extends Connector {
                             const firstIp = firstIpUp.toLowerCase();
                             return {
                                 rir,
-                                cc,
                                 type,
                                 prefix: this._toPrefix(firstIp, hosts),
                                 firstIp,
                                 hosts,
                                 date,
-                                status,
-                                hash
+                                status
                             };
                         })
                         .filter(i => i.rir === "arin" &&
@@ -77,6 +171,7 @@ export default class ConnectorARIN extends Connector {
 
                     return structuredData.reverse();
                 })
+                .then(this._addSubAllocations)
                 .then(this._toStandardFormat)
                 .then(inetnums => inetnums.filter(i => !!i))
                 .then(inetnums => {

@@ -118,12 +118,15 @@ export default class Connector {
             .replace("//", "/");
     };
 
-    _isCacheValid = () => {
-        if (fs.existsSync(this.cacheFile)) {
-            const stats = fs.statSync(this.cacheFile);
+    _isCacheValid = (file, days) => {
+        file = file ?? this.cacheFile;
+        days = days ?? this.daysWhoisCache;
+
+        if (fs.existsSync(file)) {
+            const stats = fs.statSync(file);
             const lastDownloaded = moment(stats.ctime);
 
-            if (moment(moment()).diff(lastDownloaded, 'days') <= this.daysWhoisCache){
+            if (moment(moment()).diff(lastDownloaded, 'days') <= days){
                 return true;
             }
         }
@@ -171,5 +174,22 @@ export default class Connector {
                         return [].concat.apply([], objects);
                     });
             });
+    };
+
+
+    cacheOperationOutput = (operation, cacheFile, days) => {
+        if (this._isCacheValid(cacheFile, days)) {
+            return Promise.resolve(fs.readFileSync(cacheFile, "utf8"));
+        } else {
+
+            return operation()
+                .then(data => {
+
+                    const str = JSON.stringify(data);
+                    fs.writeFileSync(cacheFile, str);
+
+                    return str;
+                });
+        }
     };
 }
