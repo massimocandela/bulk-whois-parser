@@ -58,14 +58,14 @@ export default class ConnectorARIN extends Connector {
     _addSubAllocations = (stats) => {
         const cacheFile = `${this.cacheDir}arin-stat-file`;
 
-        return Promise
-            .all([
-                this.cacheOperationOutput(() => this._addSubAllocationsByType(stats, "ipv4"), cacheFile + "v4",  7)
-                    .then(data => JSON.parse(data)),
-                this.cacheOperationOutput(() => this._addSubAllocationsByType(stats, "ipv6"), cacheFile + "v6",  7)
-                    .then(data => JSON.parse(data))
-            ])
-            .then(d => d.flat());
+        this.cacheOperationOutput(() => this._addSubAllocationsByType(stats, "ipv4"), cacheFile + "v4",  7)
+            .then(v4 => {
+                return this.cacheOperationOutput(() => this._addSubAllocationsByType(stats, "ipv6"), cacheFile + "v6",  7)
+                    .then(v6 => {
+
+                        return [...JSON.parse(v4), ...JSON.parse(v6)];
+                    });
+            });
     }
 
 
