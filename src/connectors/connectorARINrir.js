@@ -58,7 +58,7 @@ export default class ConnectorARIN extends Connector {
     _addSubAllocations = (stats) => {
         const cacheFile = `${this.cacheDir}arin-stat-file`;
 
-        this.cacheOperationOutput(() => this._addSubAllocationsByType(stats, "ipv4"), cacheFile + "v4",  7)
+        return this.cacheOperationOutput(() => this._addSubAllocationsByType(stats, "ipv4"), cacheFile + "v4",  7)
             .then(v4 => {
                 return this.cacheOperationOutput(() => this._addSubAllocationsByType(stats, "ipv6"), cacheFile + "v6",  7)
                     .then(v6 => {
