@@ -16,8 +16,8 @@ export default class ConnectorARIN extends Connector {
         this.statFile = "ftp://ftp.arin.net/pub/stats/arin/delegated-arin-extended-latest";
         this.cacheFile = [this.cacheDir, "arin.inetnums"].join("/").replace("//", "/");
         this.daysWhoisCache = this.params.defaultCacheDays || 7;
-        this.daysWhoisSuballocationsCache = this.params.daysWhoisSuballocationsCache || 7;
-        this.skipSuballocations = this.params.skipSuballocations ?? false;
+        this.daysWhoisSuballocationsCache = this.params.daysWhoisSuballocationsCache || 4;
+        this.skipSuballocations = !!this.params.skipSuballocations;
 
         if (this.daysWhoisSuballocationsCache < 4) {
             throw new Error("Sub allocations in ARIN cannot be fetched more than once every 4 days.");
@@ -37,7 +37,6 @@ export default class ConnectorARIN extends Connector {
         const cacheFile = `${this.cacheDir}arin-stat-file`;
 
         const operation = () => {
-            console.log("running")
             return axios({
                 url: this.statFile,
                 method: 'GET',
@@ -63,13 +62,14 @@ export default class ConnectorARIN extends Connector {
 
     _addSubAllocations = (stats) => {
         if (this.skipSuballocations) {
+            console.log(`[arin] Skipping sub allocations`);
+
             return stats;
         } else {
-            const cacheFile = `${this.cacheDir}arin-stat-file`;
 
-            return this.cacheOperationOutput(() => this._addSubAllocationsByType(stats, "ipv4"), cacheFile + "v4", this.daysWhoisSuballocationsCache)
+            return this.cacheOperationOutput(() => this._addSubAllocationsByType(stats, "ipv4"), this.cacheDir + "arin-stat-file-ipv4.json", this.daysWhoisSuballocationsCache)
                 .then(v4 => {
-                    return this.cacheOperationOutput(() => this._addSubAllocationsByType(stats, "ipv6"), cacheFile + "v6", this.daysWhoisSuballocationsCache)
+                    return this.cacheOperationOutput(() => this._addSubAllocationsByType(stats, "ipv6"), this.cacheDir + "arin-stat-file-ipv6.json", this.daysWhoisSuballocationsCache)
                         .then(v6 => {
 
                             return [...JSON.parse(v4), ...JSON.parse(v6)];
@@ -78,10 +78,24 @@ export default class ConnectorARIN extends Connector {
         }
     }
 
+    _getRemoteSuballocationStatFile = (type) => {
+        return axios({
+            url: `https://geolocatemuch.com/geofeeds/arin-rir/arin-stat-file-${type}.json`,
+            method: 'GET',
+            header: {
+                'User-Agent': this.userAgent
+            }
+        })
+            .then(response => {
+                if (response.data && response.data.length) {
+                    return response.data;
+                } else {
+                    return Promise.reject("Empty remote sub allocation file");
+                }
+            });
+    }
 
-    _addSubAllocationsByType = (stats, type) => {
-        console.log(`[arin] Detecting sub allocations ${type}`);
-
+    _addSubAllocationByTypeLocally = (stats, type) => {
         stats = stats.filter(i => i.type === type && i.status === "allocated");
         const out = stats;
 
@@ -138,7 +152,19 @@ export default class ConnectorARIN extends Connector {
                 }
 
                 return Object.values(index);
-            })
+            });
+    }
+
+    _addSubAllocationsByType = (stats, type) => {
+        console.log(`[arin] Fetching sub allocations ${type}`);
+
+        return this._getRemoteSuballocationStatFile(type)
+            .catch(() => {
+
+                console.log(`[arin] It was not possible to download precompiled sub allocations ${type}, I will try to compile them from whois instead`);
+
+                return this._addSubAllocationByTypeLocally(stats, type);
+            });
 
     }
 
@@ -224,6 +250,8 @@ export default class ConnectorARIN extends Connector {
     };
 
     _toStandardFormat = (items) => {
+        console.log(`[arin] Fetching NetRanges`);
+
         const progressBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
         progressBar.start(items.length, 0);
 
