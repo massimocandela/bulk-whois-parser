@@ -47,7 +47,8 @@ export default class ConnectorARIN extends Connector {
             return axios({
                 url: this.statFile,
                 method: 'GET',
-                header: {
+                headers: {
+                    'Accept-Encoding': 'gzip',
                     'User-Agent': this.userAgent
                 }
             })
@@ -89,7 +90,8 @@ export default class ConnectorARIN extends Connector {
         return axios({
             url: `https://geolocatemuch.com/geofeeds/arin-rir/arin-stat-file-${type}.json`,
             method: 'GET',
-            header: {
+            headers: {
+                'Accept-Encoding': 'gzip',
                 'User-Agent': this.userAgent
             }
         })
@@ -244,7 +246,8 @@ export default class ConnectorARIN extends Connector {
                 method: 'GET',
                 timeout: 20000,
                 responseType: 'json',
-                header: {
+                headers: {
+                    'Accept-Encoding': 'gzip',
                     'User-Agent': this.userAgent
                 }
             })

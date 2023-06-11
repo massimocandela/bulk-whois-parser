@@ -46,7 +46,8 @@ export default class ConnectorAPNIC extends Connector {
             url,
             method: 'GET',
             responseType: 'stream',
-            header: {
+            headers: {
+                'Accept-Encoding': 'gzip',
                 'User-Agent': this.userAgent
             }
         })

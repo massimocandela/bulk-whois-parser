@@ -147,7 +147,8 @@ export default class Connector {
                 url: this.dumpUrl,
                 method: 'GET',
                 responseType: 'stream',
-                header: {
+                headers: {
+                    'Accept-Encoding': 'gzip',
                     'User-Agent': this.userAgent
                 }
             })
