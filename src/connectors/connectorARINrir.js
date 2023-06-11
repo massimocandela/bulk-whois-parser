@@ -19,8 +19,14 @@ export default class ConnectorARIN extends Connector {
         this.daysWhoisSuballocationsCache = this.params.daysWhoisSuballocationsCache || 4;
         this.skipSuballocations = !!this.params.skipSuballocations;
 
-        if (this.daysWhoisSuballocationsCache < 4) {
-            throw new Error("Sub allocations in ARIN cannot be fetched more than once every 4 days.");
+        if (this.daysWhoisSuballocationsCache < 7) {
+            console.log("Sub allocations in ARIN cannot be fetched more than once every 7 days. Using 7 days.");
+            this.daysWhoisSuballocationsCache = 7;
+        }
+
+        if (this.daysWhoisCache < 3) {
+            console.log("NetRanges in ARIN cannot be fetched more than once every 3 days. Using 3 days.");
+            this.daysWhoisCache = 3;
         }
 
         this.httpAgent = new http.Agent({ keepAlive: true });
