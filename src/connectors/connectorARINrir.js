@@ -16,6 +16,12 @@ export default class ConnectorARIN extends Connector {
         this.statFile = "ftp://ftp.arin.net/pub/stats/arin/delegated-arin-extended-latest";
         this.cacheFile = [this.cacheDir, "arin.inetnums"].join("/").replace("//", "/");
         this.daysWhoisCache = this.params.defaultCacheDays || 7;
+        this.daysWhoisSuballocationsCache = this.params.daysWhoisSuballocationsCache || 7;
+        this.skipSuballocations = this.params.skipSuballocations ?? false;
+
+        if (this.daysWhoisSuballocationsCache < 4) {
+            throw new Error("Sub allocations in ARIN cannot be fetched more than once every 4 days.");
+        }
 
         this.httpAgent = new http.Agent({ keepAlive: true });
 
@@ -56,16 +62,20 @@ export default class ConnectorARIN extends Connector {
 
 
     _addSubAllocations = (stats) => {
-        const cacheFile = `${this.cacheDir}arin-stat-file`;
+        if (this.skipSuballocations) {
+            return stats;
+        } else {
+            const cacheFile = `${this.cacheDir}arin-stat-file`;
 
-        return this.cacheOperationOutput(() => this._addSubAllocationsByType(stats, "ipv4"), cacheFile + "v4",  7)
-            .then(v4 => {
-                return this.cacheOperationOutput(() => this._addSubAllocationsByType(stats, "ipv6"), cacheFile + "v6",  7)
-                    .then(v6 => {
+            return this.cacheOperationOutput(() => this._addSubAllocationsByType(stats, "ipv4"), cacheFile + "v4", this.daysWhoisSuballocationsCache)
+                .then(v4 => {
+                    return this.cacheOperationOutput(() => this._addSubAllocationsByType(stats, "ipv6"), cacheFile + "v6", this.daysWhoisSuballocationsCache)
+                        .then(v6 => {
 
-                        return [...JSON.parse(v4), ...JSON.parse(v6)];
-                    });
-            });
+                            return [...JSON.parse(v4), ...JSON.parse(v6)];
+                        });
+                });
+        }
     }
 
 
