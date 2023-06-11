@@ -18,6 +18,7 @@ export default class ConnectorARIN extends Connector {
         this.daysWhoisCache = this.params.defaultCacheDays || 7;
         this.daysWhoisSuballocationsCache = this.params.daysWhoisSuballocationsCache || 4;
         this.skipSuballocations = !!this.params.skipSuballocations;
+        this.compileSuballocationLocally = !!this.params.compileSuballocationLocally;
 
         if (this.daysWhoisSuballocationsCache < 7) {
             console.log("Sub allocations in ARIN cannot be fetched more than once every 7 days. Using 7 days.");
@@ -164,14 +165,18 @@ export default class ConnectorARIN extends Connector {
     _addSubAllocationsByType = (stats, type) => {
         console.log(`[arin] Fetching sub allocations ${type}`);
 
-        return this._getRemoteSuballocationStatFile(type)
-            .catch(() => {
+        if (this.compileSuballocationLocally) {
 
-                console.log(`[arin] It was not possible to download precompiled sub allocations ${type}, I will try to compile them from whois instead`);
+            return this._addSubAllocationByTypeLocally(stats, type);
+        } else {
+            return this._getRemoteSuballocationStatFile(type)
+                .catch(() => {
 
-                return this._addSubAllocationByTypeLocally(stats, type);
-            });
+                    console.log(`[arin] It was not possible to download precompiled sub allocations ${type}, I will try to compile them from whois instead`);
 
+                    return this._addSubAllocationByTypeLocally(stats, type);
+                });
+        }
     }
 
     _whois = (prefix) => {
