@@ -40,7 +40,7 @@ export default class WhoisParser {
                 .keys(this.connectors)
                 .map(key => this.connectors[key].getObjects(types, filterFunction, fields, forEachFunction))
             )
-            .then(objects => [].concat.apply([], objects));
+            .then(objects => objects.flat());
     };
 
     getObjects = (types, filterFunction, fields) => {

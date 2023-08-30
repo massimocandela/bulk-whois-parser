@@ -74,6 +74,14 @@ export default class Connector {
                     }
                 })
                 .on("error", (error) => {
+                    if (this.params.deleteCorruptedCacheFile) {
+                        try {
+                            fs.unlinkSync(compressedFile);
+                        } catch (error) {
+                            console.log(`Corrupted file ${compressedFile} already deleted`);
+                        }
+                    }
+
                     return reject(error, `Delete the cache file ${compressedFile}`);
                 })
                 .on("close", () => {
@@ -171,9 +179,7 @@ export default class Connector {
             .then(file => {
                 console.log(`[${this.connectorName}] Parsing whois data: ${types}`);
                 return Promise.all(types.map(type => this._readLines(file, type, filterFunction, fields, forEachFunction)))
-                    .then(objects => {
-                        return [].concat.apply([], objects);
-                    });
+                    .then(objects => objects.flat());
             });
     };
 

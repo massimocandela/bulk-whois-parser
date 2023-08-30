@@ -296,7 +296,7 @@ export default class ConnectorARIN extends Connector {
                                     .pop();
                                 inetnum["last-modified"] = lastChanges ? lastChanges.eventDate : null;
 
-                                inetnum.remarks = [].concat.apply([], remarksArray);
+                                inetnum.remarks = remarksArray.flat();
 
                                 for (let prop in data) {
                                     if (typeof(data[prop]) === "string" && !inetnum[prop]) {
@@ -321,7 +321,7 @@ export default class ConnectorARIN extends Connector {
             .then(inetnums => {
                 progressBar.stop();
 
-                return [].concat.apply([], inetnums);
+                return inetnums.flat();
             })
     };
 
