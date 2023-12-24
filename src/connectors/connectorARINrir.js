@@ -1,5 +1,5 @@
 import Connector from "./connector";
-import axios from "axios";
+import axios from "redaxios";
 import fs from "fs";
 import http from "http";
 import ipUtils from "ip-sub";
