@@ -240,7 +240,6 @@ export default class ConnectorARIN extends Connector {
         if (this._isCacheValid(file)) {
             return Promise.resolve(JSON.parse(fs.readFileSync(file, 'utf-8')));
         } else {
-            axios.defaults ??= {};
             axios.defaults.httpAgent = this.httpAgent;
             return axios({
                 url,
