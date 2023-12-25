@@ -3,7 +3,7 @@ import fs from "fs";
 import readline from "readline";
 import zlib from "zlib";
 import moment from "moment";
-import axios from "redaxios";
+import axios from "axios";
 
 export default class Connector {
     constructor(params) {
