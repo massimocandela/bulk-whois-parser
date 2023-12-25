@@ -1,5 +1,5 @@
 import Connector from "./connector";
-import axios from "redaxios";
+import axios from "axios";
 import fs from "fs";
 import moment from "moment";
 
