@@ -1,6 +1,6 @@
 {
   "name": "bulk-whois-parser",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "A lib to parse bulk whois data",
   "main": "dist/index.js",
   "bin": {
@@ -57,7 +57,7 @@
       "before:init": [
         "npm ci"
       ],
-      "after:bump": "npm run build",
+      "after:bump": "npm run compile",
       "after:release": [
         "echo Successfully released ${name} v${version} to ${repo.repository}.",
         "rm -r dist/"
