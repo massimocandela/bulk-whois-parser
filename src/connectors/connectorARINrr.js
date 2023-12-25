@@ -7,7 +7,7 @@ export default class ConnectorARINrr extends Connector {
 
         this.connectorName = "arin-rr";
         this.cacheDir += this.connectorName + "/";
-        this.dumpUrl = this.params.dumpUrl || "ftp://ftp.arin.net/pub/rr/arin.db.gz";
+        this.dumpUrl = this.params.dumpUrl || "https://ftp.arin.net/pub/rr/arin.db.gz";
         this.cacheFile = [this.cacheDir, "arin.db.gz"].join("/").replace("//", "/");
         this.daysWhoisCache = this.params.defaultCacheDays || 2;
 

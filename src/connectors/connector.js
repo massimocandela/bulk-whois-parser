@@ -3,7 +3,9 @@ import fs from "fs";
 import readline from "readline";
 import zlib from "zlib";
 import moment from "moment";
-import axios from "axios";
+const urlParser = require('url');
+const https = require('https');
+const http = require('http');
 
 export default class Connector {
     constructor(params) {
@@ -142,6 +144,31 @@ export default class Connector {
         return false;
     };
 
+    _downloadFile = (url, file) => {
+        return new Promise((resolve, reject) => {
+            const fileStream = fs.createWriteStream(file);
+
+            const options = urlParser.parse(url);
+            options.method = 'GET';
+            options.gzip = true;
+            options.timeout = 200000;
+            options.keepAliveTimeout = 20000;
+
+            (url.includes("https") ?  https : http)
+                .get(options, response => {
+                    response.pipe(fileStream);
+
+                    fileStream.on('finish', _ => {
+                        resolve(file);
+                    });
+                })
+                .on('error', e => {
+                    console.log(e);
+                });
+        });
+
+    }
+
     _getDump = () => {
 
         if (this._isCacheValid()) {
@@ -149,26 +176,12 @@ export default class Connector {
             return Promise.resolve(this.cacheFile);
         } else {
             console.log(`[${this.connectorName}] Downloading whois data`);
-            const writer = fs.createWriteStream(this.cacheFile);
 
-            return axios({
-                url: this.dumpUrl,
-                method: 'GET',
-                responseType: 'stream',
-                headers: {
-                    'Accept-Encoding': 'gzip',
-                    'User-Agent': this.userAgent
-                }
-            })
-                .then( (response) => {
-                    response.data.pipe(writer);
+            return this._downloadFile(this.dumpUrl, this.cacheFile)
+                .catch(error => {
+                    console.log(`Delete the cache file ${this.cacheFile}`);
 
-                    return new Promise((resolve, reject) => {
-                        writer.on('finish', () => resolve(this.cacheFile))
-                        writer.on('error', error => {
-                            return reject(error, `Delete the cache file ${this.cacheFile}`);
-                        });
-                    })
+                    return Promise.reject(error);
                 });
         }
     }

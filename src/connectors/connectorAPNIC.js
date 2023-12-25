@@ -1,5 +1,5 @@
 import Connector from "./connector";
-import axios from "axios";
+import axios from "redaxios";
 import fs from "fs";
 import moment from "moment";
 
@@ -40,31 +40,8 @@ export default class ConnectorAPNIC extends Connector {
 
     _getDumpFile = (url) => {
         const cacheFile = this.getCacheFileName(url);
-        const writer = fs.createWriteStream(cacheFile);
 
-        return axios({
-            url,
-            method: 'GET',
-            responseType: 'stream',
-            headers: {
-                'Accept-Encoding': 'gzip',
-                'User-Agent': this.userAgent
-            }
-        })
-            .then( (response) => {
-
-                response.data.pipe(writer);
-
-                return new Promise((resolve, reject) => {
-                    writer.on('finish', () => {
-                        resolve(cacheFile);
-                        writer.end();
-                    });
-                    writer.on('error', error => {
-                        return reject(error, `Delete the cache file ${cacheFile}`);
-                    });
-                })
-            });
+        return this._downloadFile(url, cacheFile);
     }
 
 

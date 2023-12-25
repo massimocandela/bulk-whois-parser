@@ -1,5 +1,5 @@
 import Connector from "./connector";
-import axios from "axios";
+import axios from "redaxios";
 import fs from "fs";
 import http from "http";
 import ipUtils from "ip-sub";
@@ -13,7 +13,7 @@ export default class ConnectorARIN extends Connector {
 
         this.connectorName = "arin-rir";
         this.cacheDir += this.connectorName + "/";
-        this.statFile = "ftp://ftp.arin.net/pub/stats/arin/delegated-arin-extended-latest";
+        this.statFile = "http://ftp.arin.net/pub/stats/arin/delegated-arin-extended-latest";
         this.cacheFile = [this.cacheDir, "arin.inetnums"].join("/").replace("//", "/");
         this.daysWhoisCache = this.params.defaultCacheDays || 7;
         this.daysWhoisSuballocationsCache = this.params.daysWhoisSuballocationsCache || 4;
@@ -257,7 +257,7 @@ export default class ConnectorARIN extends Connector {
                     return answer.data;
                 })
                 .catch(error => {
-                    console.log(`Cannot retrieve ${prefix}`, error.code || error.response.status);
+                    console.log(`Cannot retrieve ${prefix}`);
                     return null;
                 });
         }
