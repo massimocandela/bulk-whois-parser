@@ -69,7 +69,7 @@ export default class ConnectorARIN extends Connector {
 
         const file = `https://geolocatemuch.com/geofeeds/arin-rir/arin-stat-file-${type}.json`;
         const cacheFile = this.getCacheFileName(file);
-        return this._downloadAndReadFile(file, cacheFile, 1)
+        return this._downloadAndReadFile(file, cacheFile, 1, true)
             .then(response => {
                 if (response && response.length) {
                     return response;
@@ -212,7 +212,7 @@ export default class ConnectorARIN extends Connector {
         const url = `http://rdap.arin.net/registry/ip/${prefix}`;
         const file = this.getCacheFileName(url);
 
-        return this._downloadAndReadFile(url, file, this.daysWhoisCache)
+        return this._downloadAndReadFile(url, file, this.daysWhoisCache, true)
             .catch(error => {
                 console.log(`Cannot retrieve ${prefix}`);
                 return null;
