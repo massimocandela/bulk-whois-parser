@@ -3,6 +3,7 @@ import ConnectorAFRINIC from "./connectors/connectorAFRINIC";
 import ConnectorLACNIC from "./connectors/connectorLACNIC";
 import ConnectorAPNIC from "./connectors/connectorAPNIC";
 import ConnectorARIN from "./connectors/connectorARIN";
+import batchPromises from 'batch-promises';
 
 export default class WhoisParser {
     constructor(params) {
@@ -35,12 +36,14 @@ export default class WhoisParser {
 
     _getObjects = (types, filterFunction, fields, forEachFunction) => {
         fields = fields || [];
-        return Promise
-            .all(Object
-                .keys(this.connectors)
-                .map(key => this.connectors[key].getObjects(types, filterFunction, fields, forEachFunction))
-            )
-            .then(objects => objects.flat());
+
+        const objects = [];
+        return batchPromises(3, Object.keys(this.connectors), connector => {
+            return this.connectors[connector]
+                .getObjects(types, filterFunction, fields, forEachFunction)
+                .then(results => objects.concat(results.flat()))
+                .catch(console.log)
+        });
     };
 
     getObjects = (types, filterFunction, fields) => {
