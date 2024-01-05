@@ -155,14 +155,6 @@ export default class Connector {
             maxAttempts: 3
         });
 
-        console.log({
-            url: url,
-            directory,
-            fileName,
-            cloneFiles: false,
-            maxAttempts: 3
-        });
-
         return downloader.download()
             .then(() => file);
     }
