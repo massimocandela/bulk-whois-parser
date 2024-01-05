@@ -3,9 +3,7 @@ import fs from "fs";
 import readline from "readline";
 import zlib from "zlib";
 import moment from "moment";
-const urlParser = require('url');
-const https = require('https');
-const http = require('http');
+import Downloader from 'nodejs-file-downloader';
 
 export default class Connector {
     constructor(params) {
@@ -145,28 +143,28 @@ export default class Connector {
     };
 
     _downloadFile = (url, file) => {
-        return new Promise((resolve, reject) => {
-            const fileStream = fs.createWriteStream(file);
+        const segments = file.split("/");
+        const fileName = segments.pop();
+        const directory = segments.join("/");
 
-            const options = urlParser.parse(url);
-            options.method = 'GET';
-            options.gzip = true;
-            options.timeout = 200000;
-            options.keepAliveTimeout = 20000;
-
-            (url.includes("https") ?  https : http)
-                .get(options, response => {
-                    response.pipe(fileStream);
-
-                    fileStream.on('finish', _ => {
-                        resolve(file);
-                    });
-                })
-                .on('error', e => {
-                    console.log(e);
-                });
+        const downloader = new Downloader({
+            url: url,
+            directory,
+            fileName,
+            cloneFiles: false,
+            maxAttempts: 3
         });
 
+        console.log({
+            url: url,
+            directory,
+            fileName,
+            cloneFiles: false,
+            maxAttempts: 3
+        });
+
+        return downloader.download()
+            .then(() => file);
     }
 
     _getDump = () => {
