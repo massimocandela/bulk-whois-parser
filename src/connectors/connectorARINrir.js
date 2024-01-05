@@ -1,7 +1,5 @@
 import Connector from "./connector";
-import axios from "redaxios";
 import fs from "fs";
-import http from "http";
 import ipUtils from "ip-sub";
 import cliProgress from "cli-progress";
 import batchPromises from "batch-promises";
@@ -30,8 +28,6 @@ export default class ConnectorARIN extends Connector {
             this.daysWhoisCache = 3;
         }
 
-        this.httpAgent = new http.Agent({ keepAlive: true });
-
         if (!fs.existsSync(this.cacheDir)) {
             fs.mkdirSync(this.cacheDir,  { recursive: true });
         }
@@ -43,21 +39,7 @@ export default class ConnectorARIN extends Connector {
 
         const cacheFile = `${this.cacheDir}arin-stat-file`;
 
-        const operation = () => {
-            return axios({
-                url: this.statFile,
-                method: 'GET',
-                headers: {
-                    'Accept-Encoding': 'gzip',
-                    'User-Agent': this.userAgent
-                }
-            })
-                .then(response => response.data);
-
-        }
-
-        return this.cacheOperationOutput(operation, cacheFile, this.daysWhoisCache)
-            .then(data => JSON.parse(data));
+        return this._downloadAndReadFile(this.statFile, cacheFile, this.daysWhoisCache, false);
     };
 
     _toPrefix = (firstIp, hosts) => {
@@ -75,29 +57,22 @@ export default class ConnectorARIN extends Connector {
             return stats;
         } else {
 
-            return this.cacheOperationOutput(() => this._addSubAllocationsByType(stats, "ipv4"), this.cacheDir + "arin-stat-file-ipv4.json", this.daysWhoisSuballocationsCache)
+            return this._addSubAllocationsByType(stats, "ipv4")
                 .then(v4 => {
-                    return this.cacheOperationOutput(() => this._addSubAllocationsByType(stats, "ipv6"), this.cacheDir + "arin-stat-file-ipv6.json", this.daysWhoisSuballocationsCache)
-                        .then(v6 => {
-
-                            return [...JSON.parse(v4), ...JSON.parse(v6)];
-                        });
+                    return this._addSubAllocationsByType(stats, "ipv6")
+                        .then(v6 => [...v4, ...v6]);
                 });
         }
     }
 
     _getRemoteSuballocationStatFile = (type) => {
-        return axios({
-            url: `https://geolocatemuch.com/geofeeds/arin-rir/arin-stat-file-${type}.json`,
-            method: 'GET',
-            headers: {
-                'Accept-Encoding': 'gzip',
-                'User-Agent': this.userAgent
-            }
-        })
+
+        const file = `https://geolocatemuch.com/geofeeds/arin-rir/arin-stat-file-${type}.json`;
+        const cacheFile = this.getCacheFileName(file);
+        return this._downloadAndReadFile(file, cacheFile, 1)
             .then(response => {
-                if (response.data && response.data.length) {
-                    return response.data;
+                if (response && response.length) {
+                    return response;
                 } else {
                     return Promise.reject("Empty remote sub allocation file");
                 }
@@ -237,30 +212,11 @@ export default class ConnectorARIN extends Connector {
         const url = `http://rdap.arin.net/registry/ip/${prefix}`;
         const file = this.getCacheFileName(url);
 
-        if (this._isCacheValid(file)) {
-            return Promise.resolve(JSON.parse(fs.readFileSync(file, 'utf-8')));
-        } else {
-            axios.defaults.httpAgent = this.httpAgent;
-            return axios({
-                url,
-                method: 'GET',
-                timeout: 20000,
-                responseType: 'json',
-                headers: {
-                    'Accept-Encoding': 'gzip',
-                    'User-Agent': this.userAgent
-                }
-            })
-                .then(answer => {
-                    fs.writeFileSync(file, JSON.stringify(answer.data));
-
-                    return answer.data;
-                })
-                .catch(error => {
-                    console.log(`Cannot retrieve ${prefix}`);
-                    return null;
-                });
-        }
+        return this._downloadAndReadFile(url, file, this.daysWhoisCache)
+            .catch(error => {
+                console.log(`Cannot retrieve ${prefix}`);
+                return null;
+            });
     };
 
     _toStandardFormat = (items) => {

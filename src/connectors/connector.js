@@ -142,6 +142,23 @@ export default class Connector {
         return false;
     };
 
+    _readFile = (file, json) => {
+        if (json) {
+            return Promise.resolve(JSON.parse(fs.readFileSync(file, 'utf-8')));
+        } else {
+            return Promise.resolve(fs.readFileSync(file, 'utf-8'));
+        }
+    }
+
+    _downloadAndReadFile = (url, file, days=1, json=true) => {
+        if (!this._isCacheValid(file, days)) {
+            return this._downloadFile(url, file)
+                .then(() => this._readFile(file, json));
+        } else {
+            return this._readFile(file, json);
+        }
+    }
+
     _downloadFile = (url, file) => {
         const segments = file.split("/");
         const fileName = segments.pop();
@@ -184,22 +201,5 @@ export default class Connector {
                 return Promise.all(types.map(type => this._readLines(file, type, filterFunction, fields, forEachFunction)))
                     .then(objects => objects.flat());
             });
-    };
-
-
-    cacheOperationOutput = (operation, cacheFile, days) => {
-        if (this._isCacheValid(cacheFile, days)) {
-            return Promise.resolve(fs.readFileSync(cacheFile, "utf8"));
-        } else {
-
-            return operation()
-                .then(data => {
-
-                    const str = JSON.stringify(data);
-                    fs.writeFileSync(cacheFile, str);
-
-                    return str;
-                });
-        }
     };
 }
