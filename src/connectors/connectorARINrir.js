@@ -13,7 +13,7 @@ export default class ConnectorARIN extends Connector {
 
         this.connectorName = "arin-rir";
         this.cacheDir += this.connectorName + "/";
-        this.statFile = "http://ftp.arin.net/pub/stats/arin/delegated-arin-extended-latest";
+        this.statFile = `http://ftp.arin.net/pub/stats/arin/delegated-arin-extended-latest`;
         this.cacheFile = [this.cacheDir, "arin.inetnums"].join("/").replace("//", "/");
         this.daysWhoisCache = this.params.defaultCacheDays || 7;
         this.daysWhoisSuballocationsCache = this.params.daysWhoisSuballocationsCache || 4;
