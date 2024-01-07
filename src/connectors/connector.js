@@ -142,6 +142,16 @@ export default class Connector {
         return false;
     };
 
+    _writeFile = (file, data) => {
+        if (typeof(data) === "object") {
+            fs.writeFileSync(file, JSON.stringify(data));
+        } else {
+            fs.writeFileSync(file, data);
+        }
+
+        return Promise.resolve(data);
+    }
+
     _readFile = (file, json) => {
         if (json) {
             return Promise.resolve(JSON.parse(fs.readFileSync(file, 'utf-8')));

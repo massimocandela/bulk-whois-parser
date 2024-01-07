@@ -14,13 +14,18 @@ export default class ConnectorARIN extends Connector {
         this.statFile = `http://ftp.arin.net/pub/stats/arin/delegated-arin-extended-latest`;
         this.cacheFile = [this.cacheDir, "arin.inetnums"].join("/").replace("//", "/");
         this.daysWhoisCache = this.params.defaultCacheDays || 7;
-        this.daysWhoisSuballocationsCache = this.params.daysWhoisSuballocationsCache || 4;
+        this.daysWhoisSuballocationsCache = this.params.daysWhoisSuballocationsCache || 30;
         this.skipSuballocations = !!this.params.skipSuballocations;
         this.compileSuballocationLocally = !!this.params.compileSuballocationLocally;
 
         if (this.daysWhoisSuballocationsCache < 7) {
             console.log("Sub allocations in ARIN cannot be fetched more than once every 7 days. Using 7 days.");
             this.daysWhoisSuballocationsCache = 7;
+        }
+
+        if (this.daysWhoisSuballocationsCache < this.daysWhoisCache) {
+            console.log(`Sub allocations in ARIN cannot be fetched more than once every ${this.daysWhoisCache} days. Using ${this.daysWhoisCache} days.`);
+            this.daysWhoisSuballocationsCache = this.daysWhoisCache;
         }
 
         if (this.daysWhoisCache < 3) {
@@ -69,7 +74,7 @@ export default class ConnectorARIN extends Connector {
 
         const file = `https://geolocatemuch.com/geofeeds/arin-rir/arin-stat-file-${type}.json`;
         const cacheFile = this.getCacheFileName(file);
-        return this._downloadAndReadFile(file, cacheFile, 1, true)
+        return this._downloadAndReadFile(file, cacheFile, this.daysWhoisCache, true)
             .then(response => {
                 if (response && response.length) {
                     return response;
@@ -157,62 +162,76 @@ export default class ConnectorARIN extends Connector {
     }
 
     _whois = (prefix) => {
-        return new Promise((resolve, reject) => {
-            webWhois.lookup(`r > ${prefix}`, { follow: 0, verbose: true, timeout: 5000, returnPartialOnTimeout: true, server: "whois.arin.net" }, (error, data) => {
-                if (error) {
-                    reject(error)
-                } else {
-                    resolve(data);
-                }
-            })
-        });
+        const file = this.getCacheFileName(`whois-prefix-${prefix}`);
+
+        if (this._isCacheValid(file, this._getDistributedCacheTime())) {
+            return this._readFile(file, true);
+        } else {
+
+            return new Promise((resolve, reject) => {
+                webWhois.lookup(`r > ${prefix}`, {
+                    follow: 0,
+                    verbose: true,
+                    timeout: 5000,
+                    returnPartialOnTimeout: true,
+                    server: "whois.arin.net"
+                }, (error, data) => {
+                    if (error) {
+                        reject(error)
+                    } else {
+                        this._writeFile(file, data).then(resolve);
+                    }
+                })
+            });
+        }
     }
 
     _createWhoisDump = (types) => {
-        if (this._isCacheValid(this.cacheFile)) {
-            console.log(`[arin] Using cached whois data: ${types}`);
-            return Promise.resolve(JSON.parse(fs.readFileSync(this.cacheFile, 'utf-8')));
-        } else {
-            return this._getStatFile()
-                .then(data => {
-                    const structuredData = data
-                        .split("\n")
-                        .filter(line => line.includes("ipv4") || line.includes("ipv6") )
-                        .map(line => line.split("|"))
-                        .map(([rir, cc, type, firstIpUp, hosts, date, status, hash]) => {
-                            const firstIp = firstIpUp.toLowerCase();
-                            return {
-                                rir,
-                                type,
-                                prefix: this._toPrefix(firstIp, hosts),
-                                firstIp,
-                                hosts,
-                                date,
-                                status
-                            };
-                        })
-                        .filter(i => i.rir === "arin" &&
-                            ["ipv4", "ipv6"].includes(i.type) &&
-                            ["allocated", "assigned"].includes(i.status));
+        // if (this._isCacheValid(this.cacheFile)) {
+        //     console.log(`[arin] Using cached whois data: ${types}`);
+        //     return Promise.resolve(JSON.parse(fs.readFileSync(this.cacheFile, 'utf-8')));
+        // } else {
+        return this._getStatFile()
+            .then(data => {
+                const structuredData = data
+                    .split("\n")
+                    .filter(line => line.includes("ipv4") || line.includes("ipv6") )
+                    .map(line => line.split("|"))
+                    .map(([rir, cc, type, firstIpUp, hosts, date, status, hash]) => {
+                        const firstIp = firstIpUp.toLowerCase();
+                        return {
+                            rir,
+                            type,
+                            prefix: this._toPrefix(firstIp, hosts),
+                            firstIp,
+                            hosts,
+                            date,
+                            status
+                        };
+                    })
+                    .filter(i => i.rir === "arin" &&
+                        ["ipv4", "ipv6"].includes(i.type) &&
+                        ["allocated", "assigned"].includes(i.status));
 
-                    return structuredData.reverse();
-                })
-                .then(this._addSubAllocations)
-                .then(this._toStandardFormat)
-                .then(inetnums => inetnums.filter(i => !!i))
-                .then(inetnums => {
-                    fs.writeFileSync(this.cacheFile, JSON.stringify(inetnums));
-
-                    return inetnums;
-                });
-        }
+                return structuredData.reverse();
+            })
+            .then(this._addSubAllocations)
+            .then(this._toStandardFormat)
+            .then(inetnums => inetnums.filter(i => !!i))
+            .then(inetnums => this._writeFile(this.cacheFile, inetnums))
+        // }
     };
 
+    _getDistributedCacheTime = () => {
+        const rndInt = Math.floor(Math.random() * parseInt(this.daysWhoisSuballocationsCache/2)) + 1;
+        return Math.max(this.daysWhoisCache, this.daysWhoisSuballocationsCache - rndInt);
+    }
+
     _getRdapQuery = (prefix) => {
-        const url = `http://rdap.arin.net/registry/ip/${prefix}`;
+        const url = `https://rdap.arin.net/registry/ip/${prefix}`;
         const file = this.getCacheFileName(url);
 
-        return this._downloadAndReadFile(url, file, this.daysWhoisCache, true)
+        return this._downloadAndReadFile(url, file, this._getDistributedCacheTime(), true)
             .catch(error => {
                 console.log(`Cannot retrieve ${prefix}`);
                 return null;
@@ -226,7 +245,7 @@ export default class ConnectorARIN extends Connector {
         progressBar.start(items.length, 0);
 
         const singleBatch = (items) => {
-            return batchPromises(4, items, item => {
+            return batchPromises(1, items, item => {
                 const prefix = item.prefix;
 
                 return this._getRdapQuery(item.firstIp)
