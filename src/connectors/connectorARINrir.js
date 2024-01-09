@@ -73,7 +73,8 @@ export default class ConnectorARIN extends Connector {
     _getRemoteSuballocationStatFile = (type) => {
 
         const file = `https://geolocatemuch.com/geofeeds/arin-rir/arin-stat-file-${type}.json`;
-        const cacheFile = this.getCacheFileName(file);
+        const cacheFile =  [this.cacheDir, `arin-stat-file-${type}.json`].join("/").replace("//", "/");
+
         return this._downloadAndReadFile(file, cacheFile, this.daysWhoisCache, true)
             .then(response => {
                 if (response && response.length) {
