@@ -23,11 +23,13 @@ export default class ConnectorARIN extends Connector {
 
     getObjects = (types, filterFunction, fields, forEachFunction) => {
         fields = fields || [];
+        const objects = [];
 
         return batchPromises(1, types, type => {
-            return this._getCorrectConnector(type, filterFunction, fields, forEachFunction);
+            return this._getCorrectConnector(type, filterFunction, fields, forEachFunction)
+                .then(data => objects.concat(data))
         })
-            .then(objects => objects.flat());
+            .then(() => objects);
     }
 
 }

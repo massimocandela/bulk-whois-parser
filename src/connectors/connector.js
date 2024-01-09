@@ -202,34 +202,6 @@ export default class Connector {
         }
     }
 
-    // _retryDownload = (url, file, times) => {
-    //     const attempts = Array.apply(null, Array(times)).map(function () {});
-    //     let answer = {
-    //         response: null,
-    //         error: null
-    //     }
-    //     return batchPromises(1, attempts, attempt => {
-    //         return this._downloadFile2(url, file)
-    //             .catch(error => {
-    //                 answer.response = null;
-    //                 answer.error = error;
-    //                 return Promise.resolve();
-    //             })
-    //             .then(result => {
-    //                 answer.response = result;
-    //                 answer.error = null;
-    //                 return Promise.reject();
-    //             });
-    //     })
-    //         .then(() => {
-    //             return answer.error ? Promise.reject(answer.error) : Promise.resolve(answer.response);
-    //         })
-    // }
-
-    // _downloadFile = (url, file) => {
-    //     return this._retryDownload(url, file, 2);
-    // }
-
     _downloadFile = (url, file) => {
         return new Promise((resolve, reject) => {
             const fileStream = fs.createWriteStream(file);
@@ -251,33 +223,14 @@ export default class Connector {
                     });
 
                     fileStream.on('error', error => {
-                        // proto[protocol].agent = new proto[protocol].fetch.Agent(agentOptions)
                         reject(error);
                     });
                 })
                 .on('error', error => {
-                    // proto[protocol].agent = new proto[protocol].fetch.Agent(agentOptions)
                     reject(error);
                 });
         });
     }
-
-    // _downloadFile = (url, file) => {
-    //     const segments = file.split("/");
-    //     const fileName = segments.pop();
-    //     const directory = segments.join("/");
-    //
-    //     const downloader = new Downloader({
-    //         url: url,
-    //         directory,
-    //         fileName,
-    //         cloneFiles: false,
-    //         maxAttempts: 2
-    //     });
-    //
-    //     return downloader.download()
-    //         .then(() => file);
-    // }
 
     _getDump = () => {
 

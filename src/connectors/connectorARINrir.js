@@ -187,10 +187,10 @@ export default class ConnectorARIN extends Connector {
     }
 
     _createWhoisDump = (types) => {
-        // if (this._isCacheValid(this.cacheFile)) {
-        //     console.log(`[arin] Using cached whois data: ${types}`);
-        //     return Promise.resolve(JSON.parse(fs.readFileSync(this.cacheFile, 'utf-8')));
-        // } else {
+        if (this._isCacheValid(this.cacheFile, 1)) {
+            console.log(`[arin] Using cached whois data: ${types}`);
+            return Promise.resolve(JSON.parse(fs.readFileSync(this.cacheFile, 'utf-8')));
+        } else {
         return this._getStatFile()
             .then(data => {
                 const structuredData = data
@@ -219,7 +219,7 @@ export default class ConnectorARIN extends Connector {
             .then(this._toStandardFormat)
             .then(inetnums => inetnums.filter(i => !!i))
             .then(inetnums => this._writeFile(this.cacheFile, inetnums))
-        // }
+        }
     };
 
     _getDistributedCacheTime = () => {
