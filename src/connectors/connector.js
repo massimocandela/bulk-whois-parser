@@ -175,18 +175,20 @@ export default class Connector {
     }
 
     _readFile = (file, json) => {
-        try {
-            let content = fs.readFileSync(file, 'utf-8');
+        return new Promise((resolve, reject) => {
+            try {
+                let content = fs.readFileSync(file, 'utf-8');
 
-            if (json) {
-                content = JSON.parse(content);
+                if (json) {
+                    content = JSON.parse(content);
+                }
+
+                resolve(content);
+
+            } catch (error) {
+                reject(error);
             }
-
-            return Promise.resolve(content);
-
-        } catch (error) {
-            return Promise.reject(error);
-        }
+        });
     }
 
     _downloadAndReadFile = (url, file, days=1, json=true) => {
@@ -194,7 +196,9 @@ export default class Connector {
             return this._downloadFile(url, file)
                 .then(() => this._readFile(file, json));
         } else {
-            return this._readFile(file, json);
+            return this._readFile(file, json)
+                .catch(() => this._downloadFile(url, file)
+                    .then(() => this._readFile(file, json)));
         }
     }
 
@@ -235,8 +239,8 @@ export default class Connector {
             options.agent = proto[protocol].agent;
             options.method = 'GET';
             options.gzip = true;
-            options.timeout = 10000;
-            options.keepAliveTimeout = 600000;
+            options.timeout = 20000;
+            options.keepAliveTimeout = 600000000;
 
             proto[protocol].fetch
                 .get(options, response => {
@@ -245,9 +249,15 @@ export default class Connector {
                     fileStream.on('finish', _ => {
                         resolve(file);
                     });
+
+                    fileStream.on('error', error => {
+                        // proto[protocol].agent = new proto[protocol].fetch.Agent(agentOptions)
+                        reject(error);
+                    });
                 })
-                .on('error', e => {
-                    console.log(e);
+                .on('error', error => {
+                    // proto[protocol].agent = new proto[protocol].fetch.Agent(agentOptions)
+                    reject(error);
                 });
         });
     }

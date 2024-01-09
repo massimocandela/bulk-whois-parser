@@ -233,7 +233,7 @@ export default class ConnectorARIN extends Connector {
 
         return this._downloadAndReadFile(url, file, this._getDistributedCacheTime(), true)
             .catch(error => {
-                console.log(`Cannot retrieve ${prefix}`);
+                console.log(`Cannot retrieve ${prefix}: ${error}`);
                 return null;
             });
     };
