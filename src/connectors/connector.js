@@ -3,12 +3,34 @@ import fs from "fs";
 import readline from "readline";
 import zlib from "zlib";
 import moment from "moment";
-import Downloader from 'nodejs-file-downloader';
+const urlParser = require('url');
+const https = require('https');
+const http = require('http');
+
+const agentOptions = {
+    family: 4,
+    keepAlive: true,
+    maxSockets: 240,
+    keepAliveMsecs: 50000000,
+    maxFreeSockets: 256,
+    rejectUnauthorized: false
+};
+
+const proto = {
+    https: {
+        fetch: https,
+        agent: new https.Agent(agentOptions)
+    },
+    http: {
+        fetch: http,
+        agent: new http.Agent(agentOptions)
+    },
+}
 
 export default class Connector {
     constructor(params) {
         this.params = params || {};
-        this.userAgent = params.userAgent || "bulk-whois-parser";
+        this.userAgent = this.params.userAgent || "bulk-whois-parser";
         this.connectorName = "connector";
         this.cacheDir = this.params.cacheDir || ".cache/";
         this.cacheFile = null;
@@ -153,10 +175,17 @@ export default class Connector {
     }
 
     _readFile = (file, json) => {
-        if (json) {
-            return Promise.resolve(JSON.parse(fs.readFileSync(file, 'utf-8')));
-        } else {
-            return Promise.resolve(fs.readFileSync(file, 'utf-8'));
+        try {
+            let content = fs.readFileSync(file, 'utf-8');
+
+            if (json) {
+                content = JSON.parse(content);
+            }
+
+            return Promise.resolve(content);
+
+        } catch (error) {
+            return Promise.reject(error);
         }
     }
 
@@ -169,22 +198,76 @@ export default class Connector {
         }
     }
 
+    // _retryDownload = (url, file, times) => {
+    //     const attempts = Array.apply(null, Array(times)).map(function () {});
+    //     let answer = {
+    //         response: null,
+    //         error: null
+    //     }
+    //     return batchPromises(1, attempts, attempt => {
+    //         return this._downloadFile2(url, file)
+    //             .catch(error => {
+    //                 answer.response = null;
+    //                 answer.error = error;
+    //                 return Promise.resolve();
+    //             })
+    //             .then(result => {
+    //                 answer.response = result;
+    //                 answer.error = null;
+    //                 return Promise.reject();
+    //             });
+    //     })
+    //         .then(() => {
+    //             return answer.error ? Promise.reject(answer.error) : Promise.resolve(answer.response);
+    //         })
+    // }
+
+    // _downloadFile = (url, file) => {
+    //     return this._retryDownload(url, file, 2);
+    // }
+
     _downloadFile = (url, file) => {
-        const segments = file.split("/");
-        const fileName = segments.pop();
-        const directory = segments.join("/");
+        return new Promise((resolve, reject) => {
+            const fileStream = fs.createWriteStream(file);
+            const protocol = url.toLowerCase().split(":")[0];
 
-        const downloader = new Downloader({
-            url: url,
-            directory,
-            fileName,
-            cloneFiles: false,
-            maxAttempts: 3
+            const options = urlParser.parse(url);
+            options.agent = proto[protocol].agent;
+            options.method = 'GET';
+            options.gzip = true;
+            options.timeout = 10000;
+            options.keepAliveTimeout = 600000;
+
+            proto[protocol].fetch
+                .get(options, response => {
+                    response.pipe(fileStream);
+
+                    fileStream.on('finish', _ => {
+                        resolve(file);
+                    });
+                })
+                .on('error', e => {
+                    console.log(e);
+                });
         });
-
-        return downloader.download()
-            .then(() => file);
     }
+
+    // _downloadFile = (url, file) => {
+    //     const segments = file.split("/");
+    //     const fileName = segments.pop();
+    //     const directory = segments.join("/");
+    //
+    //     const downloader = new Downloader({
+    //         url: url,
+    //         directory,
+    //         fileName,
+    //         cloneFiles: false,
+    //         maxAttempts: 2
+    //     });
+    //
+    //     return downloader.download()
+    //         .then(() => file);
+    // }
 
     _getDump = () => {
 
