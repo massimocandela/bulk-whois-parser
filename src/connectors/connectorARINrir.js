@@ -4,6 +4,7 @@ import ipUtils from "ip-sub";
 import cliProgress from "cli-progress";
 import batchPromises from "batch-promises";
 import webWhois from "whois";
+import md5 from 'md5';
 
 export default class ConnectorARIN extends Connector {
     constructor(params) {
@@ -61,10 +62,14 @@ export default class ConnectorARIN extends Connector {
 
             return stats;
         } else {
+            const v4File = [this.cacheDir, `arin-stat-file-v4.json`].join("/").replace("//", "/");
+            const v6File = [this.cacheDir, `arin-stat-file-v6.json`].join("/").replace("//", "/");
 
             return this._addSubAllocationsByType(stats, "ipv4")
+                .then(v4 => this._writeFile(v4File, v4))
                 .then(v4 => {
                     return this._addSubAllocationsByType(stats, "ipv6")
+                        .then(v6 => this._writeFile(v6File, v6))
                         .then(v6 => [...v4, ...v6]);
                 });
         }
@@ -73,7 +78,7 @@ export default class ConnectorARIN extends Connector {
     _getRemoteSuballocationStatFile = (type) => {
 
         const file = `https://geolocatemuch.com/geofeeds/arin-rir/arin-stat-file-${type}.json`;
-        const cacheFile =  [this.cacheDir, `arin-stat-file-${type}.json`].join("/").replace("//", "/");
+        const cacheFile = this.getCacheFileName(file);
 
         return this._downloadAndReadFile(file, cacheFile, this.daysWhoisCache, true)
             .then(response => {
