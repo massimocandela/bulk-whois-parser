@@ -263,31 +263,36 @@ export default class ConnectorARIN extends Connector {
 
                             if (remarks) {
                                 const remarksArray = remarks.map(remark => (remark.description || []));
+                                const cleanRemarks = remarksArray.filter(i => i.toLowerCase().includes("geofeed")).flat();
 
-                                const af = ipUtils.getAddressFamily(startAddress);
-                                if (af === 4) {
-                                    inetnum.inetnum = `${startAddress} - ${endAddress}`;
-                                    inetnum.type = "inetnum";
-                                } else {
-                                    inetnum.inet6num = prefix;
-                                    inetnum.type = "inet6num";
-                                }
-                                const lastChanges = (events || [])
-                                    .filter(i => i.eventAction === "last changed")
-                                    .pop();
-                                inetnum["last-modified"] = lastChanges ? lastChanges.eventDate : null;
+                                if (cleanRemarks?.length) {
 
-                                inetnum.remarks = remarksArray.flat();
-
-                                for (let prop in data) {
-                                    if (typeof(data[prop]) === "string" && !inetnum[prop]) {
-                                        inetnum[prop] = data[prop];
+                                    const af = ipUtils.getAddressFamily(startAddress);
+                                    if (af === 4) {
+                                        inetnum.inetnum = `${startAddress} - ${endAddress}`;
+                                        inetnum.type = "inetnum";
+                                    } else {
+                                        inetnum.inet6num = prefix;
+                                        inetnum.type = "inet6num";
                                     }
-                                }
+                                    const lastChanges = (events || [])
+                                        .filter(i => i.eventAction === "last changed")
+                                        .pop();
+                                    inetnum["last-modified"] = lastChanges ? lastChanges.eventDate : null;
 
-                                return inetnum;
+                                    inetnum.remarks = cleanRemarks;
+
+                                    for (let prop in data) {
+                                        if (typeof (data[prop]) === "string" && !inetnum[prop]) {
+                                            inetnum[prop] = data[prop];
+                                        }
+                                    }
+
+                                    return inetnum;
+                                }
                             }
                         }
+
                         return null;
                     });
             })
