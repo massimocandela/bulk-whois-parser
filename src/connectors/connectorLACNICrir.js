@@ -1,5 +1,6 @@
 import Connector from "./connector";
 import fs from "fs";
+import ipUtils from "ip-sub";
 
 export default class ConnectorLACNICrir extends Connector {
     constructor(params) {
@@ -15,4 +16,25 @@ export default class ConnectorLACNICrir extends Connector {
             fs.mkdirSync(this.cacheDir,  { recursive: true });
         }
     }
+
+    _lacnicPrefixCompatibility = (prefix) => {
+        const [ip, bits] = ipUtils.getIpAndCidr(prefix);
+        const af = ipUtils.getAddressFamily(prefix);
+
+        return [ipUtils._expandIP(ip, af), bits].join("/");
+    }
+
+    getStandardFormat = ([key, value]) => {
+        if (key && value && !key.startsWith("#") && !key.startsWith("%")) {
+
+            if (["inetnum", "inet6num"].includes(key)) {
+                value = this._lacnicPrefixCompatibility(value);
+            }
+
+            return [key, value];
+        }
+
+        return [null, null];
+    };
+
 }
