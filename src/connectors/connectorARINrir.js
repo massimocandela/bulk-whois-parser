@@ -3,8 +3,8 @@ import fs from "fs";
 import ipUtils from "ip-sub";
 import cliProgress from "cli-progress";
 import batchPromises from "batch-promises";
-import webWhois from "whois";
-import md5 from 'md5';
+const execSync = require('child_process').execSync;
+
 import moment from 'moment/moment';
 
 export default class ConnectorARIN extends Connector {
@@ -106,15 +106,10 @@ export default class ConnectorARIN extends Connector {
                     progressBar.increment();
 
                     try {
-                        const ips = data
-                            .map(i => i.data)
-                            .flat()
-                            .join("")
-                            .split("\n")
-                            .map(i => i.trim().split(" "))
+                        const ips = data.map(i => i.split(" "))
                             .filter(i => i.length >= 5)
                             .map(i => i.filter(n => ipUtils.isValidIP(n)))
-                            .filter(i => i.length === 2)
+                            .filter(i => i.length > 0);
 
                         for (let [firstIp, lastIp] of [...new Set(ips)]) {
 
@@ -176,19 +171,11 @@ export default class ConnectorARIN extends Connector {
         } else {
 
             return new Promise((resolve, reject) => {
-                webWhois.lookup(`r > ${prefix}`, {
-                    follow: 0,
-                    verbose: true,
-                    timeout: 5000,
-                    returnPartialOnTimeout: true,
-                    server: "whois.arin.net"
-                }, (error, data) => {
-                    if (error) {
-                        reject(error)
-                    } else {
-                        this._writeFile(file, data).then(resolve);
-                    }
-                })
+                const flag = process.platform === "darwin" ? "s" : "h";
+                const output = execSync(`whois -${flag} whois.arin.net "r > ${prefix}"`, { encoding: 'utf-8' })
+
+                this._writeFile(file, output.split("\n")).then(resolve);
+
             });
         }
     }
@@ -227,7 +214,7 @@ export default class ConnectorARIN extends Connector {
             return Promise.resolve(JSON.parse(fs.readFileSync(this.cacheFile, 'utf-8')));
         } else {
             return this.getRemotePreFilteredNetRanges()
-                .catch(() => this._compileNetRangesListLocally())
+                .catch(this._compileNetRangesListLocally)
                 .then(this._toStandardFormat)
                 .then(inetnums => inetnums.filter(i => !!i))
                 .then(inetnums => this._writeFile(this.cacheFile, inetnums))
@@ -251,6 +238,7 @@ export default class ConnectorARIN extends Connector {
     };
 
     _toStandardFormat = (items) => {
+
         console.log(`[arin] Fetching NetRanges`);
 
         const progressBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
