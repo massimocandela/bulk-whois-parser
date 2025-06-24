@@ -171,7 +171,7 @@ export default class ConnectorARIN extends Connector {
         } else {
 
             return new Promise((resolve, reject) => {
-                const flag = "-h";
+                const flag = "h";
                 const output = execSync(`whois -${flag} whois.arin.net "r > ${prefix}"`, { encoding: 'utf-8' })
 
                 this._writeFile(file, output.split("\n")).then(resolve);
