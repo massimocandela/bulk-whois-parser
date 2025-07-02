@@ -4,6 +4,7 @@ import ipUtils from "ip-sub";
 import cliProgress from "cli-progress";
 import batchPromises from "batch-promises";
 const execSync = require('child_process').execSync;
+import os from "os";
 
 import moment from 'moment/moment';
 
@@ -171,7 +172,25 @@ export default class ConnectorARIN extends Connector {
         } else {
 
             return new Promise((resolve, reject) => {
-                const flag = "h";
+                let flag = "h"; // default for non-macOS or macOS 15+
+                if (process.platform === "darwin") {
+                    try {
+                        // Get Darwin kernel version to determine macOS version
+                        const releaseString = os.release();
+                        if (typeof releaseString === "string" && releaseString.includes('.')) {
+                            const versionParts = releaseString.split('.');
+                            const darwinVersion = parseInt(versionParts[0]);
+                            // Darwin 24+ corresponds to macOS 15+, where "s" flag is not supported
+                            if (!isNaN(darwinVersion) && darwinVersion < 24) {
+                                flag = "s";
+                            }
+                        }
+                    } catch (error) {
+                        // If version detection fails, fall back to "h" flag (safer default)
+                        console.warn("[arin] Could not determine macOS version, using 'h' flag:", error.message);
+                    }
+                }
+                // On macOS < 15 (darwin < 24), use "s" flag; on macOS 15+ or other platforms, use "h" flag
                 const output = execSync(`whois -${flag} whois.arin.net "r > ${prefix}"`, { encoding: 'utf-8' })
 
                 this._writeFile(file, output.split("\n")).then(resolve);
