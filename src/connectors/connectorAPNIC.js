@@ -4,7 +4,7 @@ import moment from "moment";
 
 export default class ConnectorAPNIC extends Connector {
     constructor(params) {
-        super(params)
+        super(params);
 
         this.connectorName = "apnic";
         this.cacheDir += this.connectorName + "/";
@@ -26,14 +26,14 @@ export default class ConnectorAPNIC extends Connector {
             "http://ftp.apnic.net/apnic/whois/apnic.db.route-set.gz",
             "http://ftp.apnic.net/apnic/whois/apnic.db.route.gz",
             "http://ftp.apnic.net/apnic/whois/apnic.db.route6.gz",
-            "http://ftp.apnic.net/apnic/whois/apnic.db.rtr-set.gz",
+            "http://ftp.apnic.net/apnic/whois/apnic.db.rtr-set.gz"
         ];
 
         this.cacheFiles = this.dumpUrls.map(this.getCacheFileName);
         this.daysWhoisCache = this.params.defaultCacheDays || 2;
 
         if (!fs.existsSync(this.cacheDir)) {
-            fs.mkdirSync(this.cacheDir,  { recursive: true });
+            fs.mkdirSync(this.cacheDir, {recursive: true});
         }
     }
 
@@ -41,7 +41,7 @@ export default class ConnectorAPNIC extends Connector {
         const cacheFile = this.getCacheFileName(url);
 
         return this._downloadFile(url, cacheFile);
-    }
+    };
 
 
     _multiReadLines = (files, type, filterFunction, fields = [], forEachFunction) => {
@@ -57,7 +57,7 @@ export default class ConnectorAPNIC extends Connector {
                     const stats = fs.statSync(file);
                     const lastDownloaded = moment(stats.ctime);
 
-                    if (moment(moment()).diff(lastDownloaded, 'days') <= this.daysWhoisCache){
+                    if (moment(moment()).diff(lastDownloaded, "days") <= this.daysWhoisCache) {
                         return true;
                     }
                 }
@@ -77,7 +77,7 @@ export default class ConnectorAPNIC extends Connector {
             return Promise
                 .all(this.dumpUrls.map(this._getDumpFile));
         }
-    }
+    };
 
 
     getObjects = (types, filterFunction, fields, forEachFunction) => {
@@ -88,6 +88,6 @@ export default class ConnectorAPNIC extends Connector {
                 return Promise.all(types.map(type => this._multiReadLines(file, type, filterFunction, fields, forEachFunction)))
                     .then(objects => objects.flat());
             });
-    }
+    };
 
 }

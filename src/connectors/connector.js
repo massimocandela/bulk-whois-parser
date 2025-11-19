@@ -4,9 +4,9 @@ import readline from "readline";
 import zlib from "zlib";
 import moment from "moment";
 
-const urlParser = require('url');
-const https = require('https');
-const http = require('http');
+const urlParser = require("url");
+const https = require("https");
+const http = require("http");
 
 const agentOptions = {
     family: 4,
@@ -25,8 +25,8 @@ const proto = {
     http: {
         fetch: http,
         agent: new http.Agent(agentOptions)
-    },
-}
+    }
+};
 
 export default class Connector {
     constructor(params) {
@@ -39,11 +39,11 @@ export default class Connector {
         this.daysWhoisCache = this.params.defaultCacheDays || 1;
 
         if (!fs.existsSync(this.cacheDir)) {
-            fs.mkdirSync(this.cacheDir,  { recursive: true });
+            fs.mkdirSync(this.cacheDir, {recursive: true});
         }
     }
 
-    _readLines = (compressedFile, type, filterFunction, fields = [], forEachFunction=null) => {
+    _readLines = (compressedFile, type, filterFunction, fields = [], forEachFunction = null) => {
         return new Promise((resolve, reject) => {
 
             if (!filterFunction) {
@@ -63,7 +63,7 @@ export default class Connector {
             });
 
             lineReader
-                .on('line', (line) => {
+                .on("line", (line) => {
                     if (!lastObject && line.startsWith(type + ":")) { // new object
                         const [key, value] = this.getStandardFormat(this.getKeyValue(line));
                         lastObject = {
@@ -109,15 +109,15 @@ export default class Connector {
                 })
                 .on("close", () => {
                     resolve(objects);
-                })
+                });
 
         });
 
-    }
+    };
 
     getKeyValue = (line) => {
         return line.split(/:(.+)/).filter(i => i.length).map(i => i.trim());
-    }
+    };
 
     getStandardFormat = ([key, value]) => {
         if (key && value && !key.startsWith("#") && !key.startsWith("%")) {
@@ -157,7 +157,7 @@ export default class Connector {
             const stats = fs.statSync(file);
             const lastDownloaded = moment(stats.ctime);
 
-            if (moment(moment()).diff(lastDownloaded, 'days') <= days){
+            if (moment(moment()).diff(lastDownloaded, "days") <= days) {
                 return true;
             }
         }
@@ -166,19 +166,19 @@ export default class Connector {
     };
 
     _writeFile = (file, data) => {
-        if (typeof(data) === "object") {
+        if (typeof (data) === "object") {
             fs.writeFileSync(file, JSON.stringify(data));
         } else {
             fs.writeFileSync(file, data);
         }
 
         return Promise.resolve(data);
-    }
+    };
 
     _readFile = (file, json) => {
         return new Promise((resolve, reject) => {
             try {
-                let content = fs.readFileSync(file, 'utf-8');
+                let content = fs.readFileSync(file, "utf-8");
 
                 if (json) {
                     content = JSON.parse(content);
@@ -190,9 +190,9 @@ export default class Connector {
                 reject(error);
             }
         });
-    }
+    };
 
-    _downloadAndReadFile = (url, file, days=1, json=true) => {
+    _downloadAndReadFile = (url, file, days = 1, json = true) => {
         if (!this._isCacheValid(file, days)) {
             return this._downloadFile(url, file)
                 .then(() => this._readFile(file, json));
@@ -201,7 +201,7 @@ export default class Connector {
                 .catch(() => this._downloadFile(url, file)
                     .then(() => this._readFile(file, json)));
         }
-    }
+    };
 
     _downloadFile = (url, file) => {
         return new Promise((resolve, reject) => {
@@ -210,7 +210,7 @@ export default class Connector {
 
             const options = urlParser.parse(url);
             options.agent = proto[protocol].agent;
-            options.method = 'GET';
+            options.method = "GET";
             options.gzip = true;
             options.timeout = 20000;
             options.keepAliveTimeout = 600000000;
@@ -219,19 +219,19 @@ export default class Connector {
                 .get(options, response => {
                     response.pipe(fileStream);
 
-                    fileStream.on('finish', _ => {
+                    fileStream.on("finish", _ => {
                         resolve(file);
                     });
 
-                    fileStream.on('error', error => {
+                    fileStream.on("error", error => {
                         reject(error);
                     });
                 })
-                .on('error', error => {
+                .on("error", error => {
                     reject(error);
                 });
         });
-    }
+    };
 
     _getDump = () => {
 
@@ -248,7 +248,7 @@ export default class Connector {
                     return Promise.reject(error);
                 });
         }
-    }
+    };
 
     getObjects = (types, filterFunction, fields, forEachFunction) => {
         fields = fields || [];

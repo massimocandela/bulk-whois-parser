@@ -3,7 +3,7 @@ import ConnectorAFRINIC from "./connectors/connectorAFRINIC";
 import ConnectorLACNIC from "./connectors/connectorLACNIC";
 import ConnectorAPNIC from "./connectors/connectorAPNIC";
 import ConnectorARIN from "./connectors/connectorARIN";
-import batchPromises from 'batch-promises';
+import batchPromises from "batch-promises";
 
 export default class WhoisParser {
     constructor(params) {
@@ -42,7 +42,7 @@ export default class WhoisParser {
             return this.connectors[connector]
                 .getObjects(types, filterFunction, fields, forEachFunction)
                 .then(results => objects.concat(results.flat()))
-                .catch(console.log)
+                .catch(console.log);
         });
     };
 

@@ -3,7 +3,7 @@ import fs from "fs";
 
 export default class ConnectorRIPE extends Connector {
     constructor(params) {
-        super(params)
+        super(params);
 
         this.connectorName = "ripe";
         this.cacheDir += this.connectorName + "/";
@@ -13,7 +13,7 @@ export default class ConnectorRIPE extends Connector {
         this.daysWhoisCache = this.params.defaultCacheDays || 2;
 
         if (!fs.existsSync(this.cacheDir)) {
-            fs.mkdirSync(this.cacheDir,  { recursive: true });
+            fs.mkdirSync(this.cacheDir, {recursive: true});
         }
     }
 }

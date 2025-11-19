@@ -5,7 +5,7 @@ import batchPromises from "batch-promises";
 
 export default class ConnectorLACNIC extends Connector {
     constructor(params) {
-        super(params)
+        super(params);
 
         this.rir = new ConnectorLACNICrir(params);
         this.rr = new ConnectorLACNICrr(params);
@@ -27,9 +27,9 @@ export default class ConnectorLACNIC extends Connector {
 
         return batchPromises(1, types, type => {
             return this._getCorrectConnector(type, filterFunction, fields, forEachFunction)
-                .then(data => objects.push(data))
+                .then(data => objects.push(data));
         })
             .then(() => objects.flat());
-    }
+    };
 
 }

@@ -4,7 +4,7 @@ import ipUtils from "ip-sub";
 
 export default class ConnectorLACNICrir extends Connector {
     constructor(params) {
-        super(params)
+        super(params);
 
         this.connectorName = "lacnic-rir";
         this.cacheDir += this.connectorName + "/";
@@ -13,7 +13,7 @@ export default class ConnectorLACNICrir extends Connector {
         this.daysWhoisCache = this.params.defaultCacheDays || 2;
 
         if (!fs.existsSync(this.cacheDir)) {
-            fs.mkdirSync(this.cacheDir,  { recursive: true });
+            fs.mkdirSync(this.cacheDir, {recursive: true});
         }
     }
 
@@ -22,7 +22,7 @@ export default class ConnectorLACNICrir extends Connector {
         const af = ipUtils.getAddressFamily(prefix);
 
         return [ipUtils._expandIP(ip, af), bits].join("/");
-    }
+    };
 
     getStandardFormat = ([key, value]) => {
         if (key && value && !key.startsWith("#") && !key.startsWith("%")) {
