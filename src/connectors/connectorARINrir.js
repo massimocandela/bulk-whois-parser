@@ -3,13 +3,13 @@ import fs from "fs";
 import ipUtils from "ip-sub";
 import cliProgress from "cli-progress";
 import batchPromises from "batch-promises";
-const execSync = require('child_process').execSync;
+import moment from "moment/moment";
 
-import moment from 'moment/moment';
+const execSync = require("child_process").execSync;
 
 export default class ConnectorARIN extends Connector {
     constructor(params) {
-        super(params)
+        super(params);
 
         this.connectorName = "arin-rir";
         this.cacheDir += this.connectorName + "/";
@@ -36,7 +36,7 @@ export default class ConnectorARIN extends Connector {
         }
 
         if (!fs.existsSync(this.cacheDir)) {
-            fs.mkdirSync(this.cacheDir,  { recursive: true });
+            fs.mkdirSync(this.cacheDir, {recursive: true});
         }
 
     }
@@ -74,7 +74,7 @@ export default class ConnectorARIN extends Connector {
                         .then(v6 => [...v4, ...v6]);
                 });
         }
-    }
+    };
 
     _getRemoteSuballocationStatFile = (type) => {
 
@@ -89,7 +89,7 @@ export default class ConnectorARIN extends Connector {
                     return Promise.reject("Empty remote sub allocation file");
                 }
             });
-    }
+    };
 
     _addSubAllocationByTypeLocally = (stats, type) => {
         stats = stats.filter(i => i.type === type && i.status === "allocated");
@@ -144,7 +144,7 @@ export default class ConnectorARIN extends Connector {
 
                 return Object.values(index);
             });
-    }
+    };
 
     _addSubAllocationsByType = (stats, type) => {
         console.log(`[arin] Fetching sub allocations ${type}`);
@@ -161,7 +161,7 @@ export default class ConnectorARIN extends Connector {
                     return this._addSubAllocationByTypeLocally(stats, type);
                 });
         }
-    }
+    };
 
     _whois = (prefix) => {
         const file = this.getCacheFileName(`whois-prefix-${prefix}`);
@@ -172,20 +172,20 @@ export default class ConnectorARIN extends Connector {
 
             return new Promise((resolve, reject) => {
                 const flag = "h";
-                const output = execSync(`whois -${flag} whois.arin.net "r > ${prefix}"`, { encoding: 'utf-8' })
+                const output = execSync(`whois -${flag} whois.arin.net "r > ${prefix}"`, {encoding: "utf-8"});
 
                 this._writeFile(file, output.split("\n")).then(resolve);
 
             });
         }
-    }
+    };
 
     _compileNetRangesListLocally = () => {
         return this._getStatFile()
             .then(data => {
                 const structuredData = data
                     .split("\n")
-                    .filter(line => line.includes("ipv4") || line.includes("ipv6") )
+                    .filter(line => line.includes("ipv4") || line.includes("ipv6"))
                     .map(line => line.split("|"))
                     .map(([rir, cc, type, firstIpUp, hosts, date, status, hash]) => {
                         const firstIp = firstIpUp.toLowerCase();
@@ -206,25 +206,25 @@ export default class ConnectorARIN extends Connector {
                 return structuredData.reverse();
             })
             .then(this._addSubAllocations);
-    }
+    };
 
     _createWhoisDump = (types) => {
         if (this._isCacheValid(this.cacheFile, 1)) {
             console.log(`[arin] Using cached whois data: ${types}`);
-            return Promise.resolve(JSON.parse(fs.readFileSync(this.cacheFile, 'utf-8')));
+            return Promise.resolve(JSON.parse(fs.readFileSync(this.cacheFile, "utf-8")));
         } else {
             return this.getRemotePreFilteredNetRanges()
                 .catch(this._compileNetRangesListLocally)
                 .then(this._toStandardFormat)
                 .then(inetnums => inetnums.filter(i => !!i))
-                .then(inetnums => this._writeFile(this.cacheFile, inetnums))
+                .then(inetnums => this._writeFile(this.cacheFile, inetnums));
         }
     };
 
     _getDistributedCacheTime = () => {
-        const rndInt = Math.floor(Math.random() * parseInt(this.daysWhoisSuballocationsCache/2)) + 1;
+        const rndInt = Math.floor(Math.random() * parseInt(this.daysWhoisSuballocationsCache / 2)) + 1;
         return Math.max(this.daysWhoisCache, this.daysWhoisSuballocationsCache - rndInt);
-    }
+    };
 
     _getRdapQuery = (prefix) => {
         const url = `https://rdap.arin.net/registry/ip/${prefix}`;
@@ -245,12 +245,12 @@ export default class ConnectorARIN extends Connector {
         progressBar.start(items.length, 0);
 
         const singleBatch = (items) => {
-            return batchPromises(4, items, item => {
+            return batchPromises(3, items, item => {
                 return this._getRdapQuery(item.firstIp)
                     .then(data => {
                         progressBar.increment();
                         if (data) {
-                            const { startAddress, endAddress, remarks, events } = data;
+                            const {startAddress, endAddress, remarks, events} = data;
                             const inetnum = {};
 
                             if (remarks) {
@@ -287,10 +287,10 @@ export default class ConnectorARIN extends Connector {
 
                         return null;
                     });
-            })
-        }
+            });
+        };
 
-        const halfList = Math.ceil(items.length/2);
+        const halfList = Math.ceil(items.length / 2);
         return Promise
             .all([
                 singleBatch(items.slice(0, halfList)),
@@ -300,7 +300,7 @@ export default class ConnectorARIN extends Connector {
                 progressBar.stop();
 
                 return inetnums.flat();
-            })
+            });
     };
 
     getRemotePreFilteredNetRanges = () => {
@@ -309,14 +309,14 @@ export default class ConnectorARIN extends Connector {
         }
 
         const url = "https://geofeeds.packetvis.com/geolocatemuch/arin.inetnums";
-        const metadataUrl = "https://geofeeds.packetvis.com/geolocatemuch/metadata.json"
+        const metadataUrl = "https://geofeeds.packetvis.com/geolocatemuch/metadata.json";
         const file = this.getCacheFileName(url);
         const metadataFile = this.getCacheFileName(metadataUrl);
 
         return this._downloadAndReadFile(metadataUrl, metadataFile, 1, true)
             .then(metadata => {
                 const lastUpdate = moment.unix(metadata.lastUpdate);
-                if (moment(moment()).diff(lastUpdate, 'days') <= 10){
+                if (moment(moment()).diff(lastUpdate, "days") <= 10) {
 
                     return this._downloadAndReadFile(url, file, 1, true);
                 } else {
@@ -333,8 +333,8 @@ export default class ConnectorARIN extends Connector {
                             prefix: ipVersion === "v6" ? inet6num : null
                         };
                     });
-            })
-    }
+            });
+    };
 
     getObjects = (types, filterFunction, fields, forEachFunction) => {
         if (this.params.arinBulk) {
@@ -372,5 +372,5 @@ export default class ConnectorARIN extends Connector {
                     return data;
                 });
         }
-    }
+    };
 }
