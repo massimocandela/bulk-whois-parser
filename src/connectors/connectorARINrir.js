@@ -245,7 +245,7 @@ export default class ConnectorARIN extends Connector {
         progressBar.start(items.length, 0);
 
         const singleBatch = (items) => {
-            return batchPromises(3, items, item => {
+            return batchPromises(2, items, item => {
                 return this._getRdapQuery(item.firstIp)
                     .then(data => {
                         progressBar.increment();
