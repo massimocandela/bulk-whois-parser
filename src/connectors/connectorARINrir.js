@@ -19,6 +19,7 @@ export default class ConnectorARIN extends Connector {
         this.daysWhoisSuballocationsCache = this.params.daysWhoisSuballocationsCache || 30;
         this.skipSuballocations = !!this.params.skipSuballocations;
         this.compileSuballocationLocally = !!this.params.compileSuballocationLocally;
+        this.whoisBatchSize = this.params.whoisBatchSize ?? 2;
 
         if (this.daysWhoisSuballocationsCache < 7) {
             console.log("Sub allocations in ARIN cannot be fetched more than once every 7 days. Using 7 days.");
@@ -245,7 +246,8 @@ export default class ConnectorARIN extends Connector {
         progressBar.start(items.length, 0);
 
         const singleBatch = (items) => {
-            return batchPromises(2, items, item => {
+
+            return batchPromises(this.whoisBatchSize, items, item => {
                 return this._getRdapQuery(item.firstIp)
                     .then(data => {
                         progressBar.increment();
