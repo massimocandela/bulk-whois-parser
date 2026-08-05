@@ -227,12 +227,16 @@ export default class ConnectorARIN extends Connector {
         return Math.max(this.daysWhoisCache, this.daysWhoisSuballocationsCache - rndInt);
     };
 
-    _getRdapQuery = (prefix) => {
+    _getRdapQuery = (prefix, attempt = 0) => {
         const url = `https://rdap.arin.net/registry/ip/${prefix}`;
         const file = this.getCacheFileName(url);
 
         return this._downloadAndReadFile(url, file, this._getDistributedCacheTime(), true)
             .catch(error => {
+                if (attempt < 2) {
+                    console.log(`Failed to retrieve ${prefix} (attempt ${attempt + 1}/3), retrying...`);
+                    return this._getRdapQuery(prefix, attempt + 1);
+                }
                 console.log(`Cannot retrieve ${prefix}: ${error}`);
                 return null;
             });
